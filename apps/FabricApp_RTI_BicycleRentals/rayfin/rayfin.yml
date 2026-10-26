@@ -1,0 +1,46 @@
+id: fabricapp-rti-bicyclerentals
+name: FabricApp_RTI_BicycleRentals
+version: 1.0.0
+services:
+  connectors:
+    enabled: true
+  auth:
+    enabled: true
+    fabric:
+      enabled: true
+      externalEntraExchange: true
+    password:
+      enabled: false
+    allowedRedirectUris:
+      - http://localhost:5173
+      - http://127.0.0.1:5173
+      - https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net
+  data:
+    enabled: true
+    path: packages/data
+    buildCommand: npm run build
+    dialect: mssql
+  staticHosting:
+    enabled: true
+    path: packages/frontend
+    folder: dist
+    buildCommand: npm run build:fabric
+    indexDocument: index.html
+    assetAccess: protected
+    embedded:
+      only: false
+  storage:
+    enabled: false
+  functions:
+    enabled: false
+connectors:
+  - name: sm_rti_bicyclerentals
+    type: fabric-semanticmodel
+    config:
+      workspaceId: 7bdd5482-61f9-4cb6-b70e-42723751f60f
+      itemId: e50ec3a9-c600-446d-b856-44946bcd78ce
+    auth:
+      type: delegated
+    version: "1"
+    operations:
+      - name: executeQuery

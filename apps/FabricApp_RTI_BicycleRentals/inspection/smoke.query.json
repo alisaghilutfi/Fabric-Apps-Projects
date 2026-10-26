@@ -1,0 +1,1 @@
+﻿{ "query": "EVALUATE TOPN(1, 'Station Snapshot')" }
