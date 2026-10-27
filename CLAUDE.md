@@ -32,3 +32,6 @@ It owns capability routing, Rayfin API guidance, build conventions and deploymen
 - BOM-free file writes: [IO.File]::WriteAllText($p, $content, (New-Object System.Text.UTF8Encoding($false)))
 - JSON args to CLI: use --% stop-parsing token: npx rayfin --% connector invoke ...
 - Multi-line file writes: use Git Bash, not PowerShell heredoc
+
+## Fabric app pane
+At the start of every session run: /fabric-app-pane C:\Users\alisa\DS-ML-DL\Fabric-Apps-Projects\apps
