@@ -23,5 +23,17 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "fabric-data-app@power-bi-agentic-development": true
+  },
+  "pluginConfigs": {
+    "fabric-data-app@power-bi-agentic-development": {
+      "options": {
+        "glyphs": "plain",
+        "follow": "on",
+        "fontHint": "on"
+      }
+    }
   }
 }
