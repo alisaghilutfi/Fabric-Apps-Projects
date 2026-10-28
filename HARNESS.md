@@ -6,20 +6,116 @@ session before making decisions about architecture or tooling.
 
 ---
 
-## Agent Roles
+## The Two-Harness System
 
-**ProjectPlanner** (this claude.ai project) — architecture, entity design,
-`@role` policy design, session planning. Never executes.
+```
+ProjectPlanner (claude.ai)          FabricEngineer (Claude Code)
+         │                                    │
+         │  writes next-step instructions     │
+         ▼                                    │
+   PROJECTS.md ──────────────────────────────▶ │ reads at session start
+         │                                    │
+         │                          executes scaffold / deploy / Git
+         │                                    │
+         │◀────────────────── updates status ─┘
+```
 
-**FabricEngineer** (Claude Code in VS Code) — scaffold, file edits, builds,
+**ProjectPlanner** (claude.ai) — architecture, entity design, `@role`
+policy design, session planning. Never executes.
+
+**FabricEngineer** (Claude Code) — scaffold, file edits, builds,
 deploys, Git operations. Never makes architectural decisions without
 ProjectPlanner input.
 
-**End-of-session discipline:**
-- FabricEngineer updates `PROJECTS.md` and root `README.md`
-- No per-app CONTEXT.md needed — Rayfin's own `README.md` covers app structure
-- Per-app gotchas and learnings go here in HARNESS.md
-- Commit goes to `main` directly (no dev/test chain — deploy is `rayfin up`)
+**Context files are the handoff mechanism.** There is no per-app
+CONTEXT.md — `HARNESS.md` and the app's `README.md` serve that role.
+`PROJECTS.md` is the portfolio-wide status registry maintained by agents.
+
+**`rayfin up` is the execution boundary.** It is to Fabric Apps what
+`git push` is to code — it provisions or updates the live Fabric items
+(SQL child, Functions, app URL). Do not treat a file edit as a deploy
+until `rayfin up` has run.
+
+---
+
+## Session Protocols
+
+### Pre-session (ProjectPlanner)
+
+Run this in claude.ai **before** starting a FabricEngineer session.
+
+```
+Read these two files in order:
+1. HARNESS.md — read in full
+2. PROJECTS.md — find the app block for the target app
+
+Then state:
+- Current app status in 3-5 bullets (what is live, what is pending, any blockers)
+- The next concrete step FabricEngineer should execute
+
+Do not propose any changes to HARNESS.md or PROJECTS.md here —
+that is FabricEngineer's job at end-of-session.
+```
+
+---
+
+### Start-of-session (FabricEngineer)
+
+```
+Read these files in order:
+1. HARNESS.md — read in full
+2. PROJECTS.md — find the app block for the target app
+3. apps/<AppName>/README.md — read in full
+
+Then:
+1. State current app status in 3-5 bullets
+   (what is live, what is broken, what is pending)
+2. State any hard blockers that prevent work
+3. Confirm the next step — do not invent a new step unless
+   PROJECTS.md is empty for this app or a blocker makes it impossible
+
+Do not begin any execution until I confirm the proposed step.
+```
+
+---
+
+### End-of-session (FabricEngineer)
+
+```
+Session is complete. Update the project docs as follows:
+
+1. In PROJECTS.md:
+   - Update the app status line and open items. Remove done items.
+
+2. In README.md (repo root):
+   - If a new app was added this session, add its entry to the
+     Projects section following the existing style.
+   - If an existing app changed status, update its entry.
+   - Do not rewrite entries that did not change.
+
+Then commit to main with a conventional commit message.
+```
+
+---
+
+## Git & Deploy Strategy
+
+- Commit directly to `main` (no dev/test chain — live state is what `rayfin up` deployed)
+- Conventional commits (`feat:`, `fix:`, `docs:`, `chore:` etc.)
+- `rayfin up` is the deploy boundary — it is to Fabric Apps what `git push` is to code
+- **Never commit:** `rayfin/.env`, `rayfin/.temp/`, `.env.local`, `node_modules/`, `dist/`
+- **DO commit:** `rayfin/.deployments.json`, `rayfin/.lockfile.json`, `rayfin/.project.json` (deployment state, not secrets)
+
+---
+
+## MCP & Plugins Configuration
+
+- **Fabric App pane:** run `/tui fullscreen` then `/fabric-app-pane C:\Users\alisa\DS-ML-DL\Fabric-Apps-Projects\apps` at session start — this is already wired in `CLAUDE.md` as a startup instruction
+- **skills-for-fabric v0.3.19:** `powerbi-authoring` and `fabric-skills` plugins loaded at user scope; both MCP servers connect at session start
+- **Session startup checklist:**
+  - CLAUDE.md startup instruction launches the app pane automatically
+  - F2 capacity must be running before `rayfin up` or `npx rayfin up db apply`
+  - Remind to pause F2 capacity at session end
 
 ---
 
@@ -203,14 +299,6 @@ import { fabricSemanticModel } from '@microsoft/rayfin-connector-fabric-semantic
 
 ---
 
-## Windows PowerShell Gotchas
-
-- `Set-Content -Encoding UTF8` writes a BOM — use `[IO.File]::WriteAllText($p, $content, (New-Object System.Text.UTF8Encoding($false)))` for any file TypeScript/Vite will consume
-- PS 5.1 strips inner double-quotes from single-quoted JSON strings — use `--% ` stop-parsing token for connector invoke: `npx rayfin --% connector invoke ...`
-- Heredoc (`<< 'EOF'`) doesn't work in PowerShell — use Git Bash for multi-line file writes
-
----
-
 ## .gitignore Must-Haves (per app)
 
 Rayfin's own `.gitignore` in the scaffold covers most of these, but verify:
@@ -238,6 +326,9 @@ these ARE committed (deployment state, not secrets).
 | "Sign in failed" in Fabric portal during local dev | Expected — Fabric SSO can't reach localhost backend; use `http://localhost:5173/` instead |
 | LF→CRLF warnings on `git add` | Scaffold uses Unix line endings; add `.gitattributes` to normalize (cleanup task) |
 | `rayfin dev` picks wrong workspace | Answer the CLI prompt; workspace is persisted to `rayfin/.env` |
+| `Set-Content -Encoding UTF8` writes BOM | Use `[IO.File]::WriteAllText($p, $content, (New-Object System.Text.UTF8Encoding($false)))` for any file TypeScript/Vite will consume |
+| PS 5.1 strips inner double-quotes from single-quoted JSON | Use `--% ` stop-parsing token for connector invoke: `npx rayfin --% connector invoke ...` |
+| Heredoc (`<< 'EOF'`) doesn't work in PowerShell | Use Git Bash for multi-line file writes |
 
 ---
 
@@ -253,4 +344,4 @@ the SQL database directly in the portal (causes schema conflicts).
 
 ---
 
-*Last updated: 2026-10-26 — initial build of my-rayfin-app (TodoItem entity, @role owner policy, db apply loop)*
+*Last updated: 2026-10-28*
