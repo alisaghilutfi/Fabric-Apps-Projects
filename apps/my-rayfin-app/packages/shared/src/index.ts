@@ -4,4 +4,15 @@
  * It remains empty while the data service is disabled. Data capabilities add
  * entity keys here so every runtime consumes the same schema contract.
  */
-export type UniversalAppSchema = Record<string, never>;
+export interface TodoItemRecord {
+  id: string;
+  ownerId: string;
+  title: string;
+  isCompleted: boolean;
+  createdAt: Date;
+  dueDate?: Date | null;
+}
+
+export type UniversalAppSchema = {
+  TodoItem: TodoItemRecord;
+};
