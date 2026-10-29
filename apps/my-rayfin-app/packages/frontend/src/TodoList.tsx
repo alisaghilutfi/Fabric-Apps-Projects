@@ -170,13 +170,11 @@ function TodoRow({ item, pending, onToggle, onDelete }: TodoRowProps) {
       />
       <label
         htmlFor={`todo-${item.id}`}
-        className={
-          item.isCompleted
-            ? 'flex-1 cursor-pointer text-300 line-through opacity-50'
-            : 'flex-1 cursor-pointer text-300'
-        }
+        className="flex-1 cursor-pointer text-300"
       >
-        {item.title}
+        <span className={item.isCompleted ? 'line-through opacity-50' : ''}>
+          {item.title}
+        </span>
       </label>
       <button
         type="button"
