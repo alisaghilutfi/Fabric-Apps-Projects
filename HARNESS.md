@@ -6,95 +6,29 @@ session before making decisions about architecture or tooling.
 
 ---
 
-## The Two-Harness System
+## Agent Roles
 
-```
-ProjectPlanner (claude.ai)          FabricEngineer (Claude Code)
-         │                                    │
-         │  writes next-step instructions     │
-         ▼                                    │
-   PROJECTS.md ──────────────────────────────▶ │ reads at session start
-         │                                    │
-         │                          executes scaffold / deploy / Git
-         │                                    │
-         │◀────────────────── updates status ─┘
-```
+**ProjectPlanner** (claude.ai Fabric & Power BI MCPs project) — architecture, entity design,
+`@role` policy design, doc review, session planning. Never executes files or Git operations.
 
-**ProjectPlanner** (claude.ai) — architecture, entity design, `@role`
-policy design, session planning. Never executes.
+**FabricEngineer** (Claude Code in VS Code) — scaffold, file edits, builds, deploys, Git
+operations. Never makes architectural decisions without ProjectPlanner input.
 
-**FabricEngineer** (Claude Code) — scaffold, file edits, builds,
-deploys, Git operations. Never makes architectural decisions without
-ProjectPlanner input.
+**Start-of-session discipline:**
+- ProjectPlanner: read `HARNESS.md` and `PROJECTS.md`; read `apps/<AppName>/CONTEXT.md` for the app being worked on; state current status in 3–5 bullets; confirm next step before any execution
+- FabricEngineer: read `HARNESS.md`, `apps/<AppName>/CONTEXT.md`, and the relevant skill files for the task; never proceed without knowing the current schema version and open items
 
-**Context files are the handoff mechanism.** There is no per-app
-CONTEXT.md — `HARNESS.md` and the app's `README.md` serve that role.
-`PROJECTS.md` is the portfolio-wide status registry maintained by agents.
+**End-of-session discipline:**
+- FabricEngineer overwrites `apps/<AppName>/CONTEXT.md` Last Session section and updates Open Items — never append; Git history is the archive
+- FabricEngineer updates `PROJECTS.md` — status, live URL, any new apps
+- FabricEngineer updates root `README.md` — app table
+- ProjectPlanner does not execute any of these; they are FabricEngineer's responsibility
+- Commit goes to `main` directly (no dev/test chain — deploy is `rayfin up`)
 
 **`rayfin up` is the execution boundary.** It is to Fabric Apps what
 `git push` is to code — it provisions or updates the live Fabric items
 (SQL child, Functions, app URL). Do not treat a file edit as a deploy
 until `rayfin up` has run.
-
----
-
-## Session Protocols
-
-### Pre-session (ProjectPlanner)
-
-Run this in claude.ai **before** starting a FabricEngineer session.
-
-```
-Read these two files in order:
-1. HARNESS.md — read in full
-2. PROJECTS.md — find the app block for the target app
-
-Then state:
-- Current app status in 3-5 bullets (what is live, what is pending, any blockers)
-- The next concrete step FabricEngineer should execute
-
-Do not propose any changes to HARNESS.md or PROJECTS.md here —
-that is FabricEngineer's job at end-of-session.
-```
-
----
-
-### Start-of-session (FabricEngineer)
-
-```
-Read these files in order:
-1. HARNESS.md — read in full
-2. PROJECTS.md — find the app block for the target app
-3. apps/<AppName>/README.md — read in full
-
-Then:
-1. State current app status in 3-5 bullets
-   (what is live, what is broken, what is pending)
-2. State any hard blockers that prevent work
-3. Confirm the next step — do not invent a new step unless
-   PROJECTS.md is empty for this app or a blocker makes it impossible
-
-Do not begin any execution until I confirm the proposed step.
-```
-
----
-
-### End-of-session (FabricEngineer)
-
-```
-Session is complete. Update the project docs as follows:
-
-1. In PROJECTS.md:
-   - Update the app status line and open items. Remove done items.
-
-2. In README.md (repo root):
-   - If a new app was added this session, add its entry to the
-     Projects section following the existing style.
-   - If an existing app changed status, update its entry.
-   - Do not rewrite entries that did not change.
-
-Then commit to main with a conventional commit message.
-```
 
 ---
 
@@ -344,4 +278,4 @@ the SQL database directly in the portal (causes schema conflicts).
 
 ---
 
-*Last updated: 2026-10-28*
+*Last updated: 2026-10-29*
