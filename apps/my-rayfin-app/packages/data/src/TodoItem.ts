@@ -8,7 +8,7 @@ export class TodoItem {
   @uuid()
   id!: string;
 
-  @text()
+  @text({ max: 255 })
   ownerId!: string;
 
   @text({ min: 1, max: 200 })
