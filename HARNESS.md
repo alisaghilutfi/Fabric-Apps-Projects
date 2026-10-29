@@ -138,7 +138,7 @@ Fabric-Apps-Projects/
 
 ```bash
 # Create new app (run from repo root — then move to apps/)
-npm init @microsoft/create-rayfin@latest -- AppName
+npm create @microsoft/rayfin@latest    # canonical form per MS docs
 
 # IMPORTANT: scaffold lands at repo root, not apps/
 # Move immediately after:
