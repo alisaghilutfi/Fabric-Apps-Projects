@@ -392,16 +392,17 @@ function AddItemForm({ onAdd, disabled }: AddItemFormProps) {
 
 // ─── PriorityBadge ───────────────────────────────────────────────────────────
 
-function PriorityBadge({ priority }: { priority?: string | null }) {
+function PriorityBadge({ priority, completed }: { priority?: string | null; completed?: boolean }) {
   if (!priority) return null;
   const urgent = priority === 'Urgent';
   return (
     <span
-      className={
+      className={[
         urgent
           ? 'inline-flex items-center shrink-0 rounded-full px-200 py-[2px] text-100 font-medium bg-destructive text-destructive-foreground'
-          : 'inline-flex items-center shrink-0 rounded-full px-200 py-[2px] text-100 font-medium bg-muted text-muted-foreground'
-      }
+          : 'inline-flex items-center shrink-0 rounded-full px-200 py-[2px] text-100 font-medium bg-muted text-muted-foreground',
+        completed ? 'opacity-50' : '',
+      ].join(' ')}
       aria-label={`Priority: ${priority}`}
     >
       {priority}
@@ -445,7 +446,6 @@ function TodoRow({ item, pending, imageBackground, onToggle, onDelete }: TodoRow
       className={[
         'flex items-start gap-300 rounded-lg border border-border px-400 py-300 transition-all duration-300',
         rowBg,
-        item.isCompleted ? 'opacity-60' : '',
       ].join(' ')}
     >
       <input
@@ -457,7 +457,10 @@ function TodoRow({ item, pending, imageBackground, onToggle, onDelete }: TodoRow
         className="mt-[3px] h-4 w-4 shrink-0 accent-primary"
         aria-label={`Mark "${item.title}" as ${item.isCompleted ? 'incomplete' : 'complete'}`}
       />
-      <label htmlFor={`todo-${item.id}`} className="flex-1 min-w-0 cursor-pointer">
+      <label
+        htmlFor={`todo-${item.id}`}
+        className={['flex-1 min-w-0 cursor-pointer transition-opacity duration-300', item.isCompleted ? 'opacity-50' : ''].join(' ')}
+      >
         <span className={['text-300 block', item.isCompleted ? 'line-through' : ''].join(' ')}>
           {item.title}
         </span>
@@ -468,7 +471,7 @@ function TodoRow({ item, pending, imageBackground, onToggle, onDelete }: TodoRow
           </span>
         )}
       </label>
-      <PriorityBadge priority={item.priority} />
+      <PriorityBadge priority={item.priority} completed={item.isCompleted} />
       <button
         type="button"
         onClick={() => setConfirming(true)}
