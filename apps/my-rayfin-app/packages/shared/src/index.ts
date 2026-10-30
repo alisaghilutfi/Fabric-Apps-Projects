@@ -9,6 +9,7 @@ export interface TodoItemRecord {
   ownerId: string;
   title: string;
   isCompleted: boolean;
+  priority?: string | null;
   createdAt: Date;
   dueDate?: Date | null;
 }

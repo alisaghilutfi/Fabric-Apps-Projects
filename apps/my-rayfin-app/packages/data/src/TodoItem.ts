@@ -17,6 +17,9 @@ export class TodoItem {
   @boolean()
   isCompleted!: boolean;
 
+  @text({ max: 20, optional: true })
+  priority?: string;
+
   @date()
   createdAt!: Date;
 

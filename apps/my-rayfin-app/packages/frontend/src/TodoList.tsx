@@ -17,6 +17,7 @@ export function TodoList() {
         'ownerId',
         'title',
         'isCompleted',
+        'priority',
         'createdAt',
         'dueDate',
       ])
@@ -81,34 +82,51 @@ export function TodoList() {
     if (!session.isAuthenticated || !session.user) {
       throw new Error('Not signed in.');
     }
+
+    let priority: string | undefined;
+    try {
+      priority = await client.functions.classifyTask.invoke({ title });
+    } catch {
+      // Classification is best-effort — proceed without priority on failure.
+      priority = undefined;
+    }
+
     void crud.create({
       ownerId: session.user.id,
       title,
       isCompleted: false,
       createdAt: new Date(),
+      ...(priority !== undefined ? { priority } : {}),
     });
   }
 }
 
 interface AddItemFormProps {
-  onAdd(title: string): void;
+  onAdd(title: string): Promise<void>;
   disabled?: boolean;
 }
 
 function AddItemForm({ onAdd, disabled }: AddItemFormProps) {
   const [title, setTitle] = useState('');
+  const [classifying, setClassifying] = useState(false);
   const trimmed = title.trim();
 
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!trimmed || classifying) return;
+    setClassifying(true);
+    try {
+      await onAdd(trimmed);
+      setTitle('');
+    } finally {
+      setClassifying(false);
+    }
+  }
+
+  const busy = disabled || classifying;
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!trimmed) return;
-        onAdd(trimmed);
-        setTitle('');
-      }}
-      className="flex gap-200"
-    >
+    <form onSubmit={(e) => { void handleSubmit(e); }} className="flex gap-200">
       <label htmlFor="new-todo" className="sr-only">
         Task title
       </label>
@@ -118,14 +136,15 @@ function AddItemForm({ onAdd, disabled }: AddItemFormProps) {
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Add a task"
         maxLength={200}
-        className="flex-1 rounded-md border border-input bg-background px-300 py-200 text-300 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        disabled={busy}
+        className="flex-1 rounded-md border border-input bg-background px-300 py-200 text-300 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
       />
       <button
         type="submit"
-        disabled={disabled || !trimmed}
+        disabled={busy || !trimmed}
         className="rounded-md bg-primary px-400 py-200 text-300 font-medium text-primary-foreground disabled:opacity-50"
       >
-        Add
+        {classifying ? 'Classifying…' : 'Add'}
       </button>
     </form>
   );
@@ -136,6 +155,23 @@ interface TodoRowProps {
   pending: boolean;
   onToggle(checked: boolean): void;
   onDelete(): void;
+}
+
+function PriorityBadge({ priority }: { priority?: string | null }) {
+  if (!priority) return null;
+  const urgent = priority === 'Urgent';
+  return (
+    <span
+      className={
+        urgent
+          ? 'shrink-0 rounded px-200 py-50 text-200 font-medium bg-destructive text-destructive-foreground'
+          : 'shrink-0 rounded px-200 py-50 text-200 font-medium bg-muted text-muted-foreground'
+      }
+      aria-label={`Priority: ${priority}`}
+    >
+      {priority}
+    </span>
+  );
 }
 
 function TodoRow({ item, pending, onToggle, onDelete }: TodoRowProps) {
@@ -176,6 +212,7 @@ function TodoRow({ item, pending, onToggle, onDelete }: TodoRowProps) {
           {item.title}
         </span>
       </label>
+      <PriorityBadge priority={item.priority} />
       <button
         type="button"
         onClick={() => setConfirming(true)}

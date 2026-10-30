@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "2.0",
+  "functions": [
+    {
+      "functionName": "classifyTask",
+      "delegateParameters": [
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false,
+          "hasDefault": false,
+          "position": 0,
+          "isFabricParameter": false
+        },
+        {
+          "name": "ctx",
+          "type": "RayfinContext<UniversalAppSchema>",
+          "optional": false,
+          "hasDefault": false,
+          "position": 1,
+          "isFabricParameter": false
+        }
+      ],
+      "contextAudiences": []
+    }
+  ]
+}
