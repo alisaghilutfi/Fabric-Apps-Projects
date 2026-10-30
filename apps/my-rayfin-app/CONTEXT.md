@@ -27,7 +27,7 @@
 - UI polish: app-design skill not yet applied
 - dueDate field exists in schema but no UI yet
 - No pagination (under 100 items assumed for now)
-- ANTHROPIC_API_KEY secret must be provisioned on deployed backend: run `npx rayfin secret set ANTHROPIC_API_KEY` interactively from the app folder (requires interactive terminal for masked prompt)
+- Old test tasks in the database — consider a clear-all or filter for completed items
 
 ## Last Session
-2026-10-30 — functions capability added; classifyTask UDF calls Claude Haiku to classify tasks as Urgent/Non-Urgent; priority field added to TodoItem (schema v7); coloured badge shown on each row; func 4.15.2 installed via winget; commit ed99e3b
+2026-10-30 — Functions capability added (classifyTask via Claude API); priority field added to TodoItem (schema v7); priority selector (Auto/Urgent/Non-Urgent) on create form; badge rendering fixed (inline pill); strikethrough fix for all completed items; ANTHROPIC_API_KEY secret set on deployed backend; commits ed99e3b, 6bed8c0, 23d41a0
