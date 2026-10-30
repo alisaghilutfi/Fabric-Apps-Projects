@@ -24,10 +24,8 @@
 - `rayfin/rayfin.yml` — services config (auth: Fabric SSO only, data: enabled, dialect: mssql, functions: enabled)
 
 ## Open Items
-- UI polish: app-design skill not yet applied
-- dueDate field exists in schema but no UI yet
 - No pagination (under 100 items assumed for now)
 - Old test tasks in the database — consider a clear-all or filter for completed items
 
 ## Last Session
-2026-10-30 — Functions capability added (classifyTask via Claude API); priority field added to TodoItem (schema v7); priority selector (Auto/Urgent/Non-Urgent) on create form; badge rendering fixed (inline pill); strikethrough fix for all completed items; ANTHROPIC_API_KEY secret set on deployed backend; commits ed99e3b, 6bed8c0, 23d41a0
+2026-10-30 (session 2) — UI polish rewrite: header bar + theme toggle, dueDate UI in create form, Trash2 icon, completed-items show/hide filter, UTC-safe date formatting; background picker (6 colour swatches + 6 Unsplash nature photos, localStorage); 600ms completion linger before items disappear; semi-transparent overlays when image background active; py-[2px]/mt-[3px] replacing custom spacing tokens; commits 23d41a0, 0307624
