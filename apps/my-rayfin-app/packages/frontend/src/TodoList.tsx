@@ -9,6 +9,8 @@ import {
   LoadingState,
 } from './components/states';
 
+type PriorityMode = 'auto' | 'Urgent' | 'Non-Urgent';
+
 export function TodoList() {
   const crud = useCrud<TodoItemRecord>({
     list: async () =>
@@ -76,7 +78,7 @@ export function TodoList() {
     </main>
   );
 
-  async function onAdd(title: string) {
+  async function onAdd(title: string, mode: PriorityMode) {
     const client = await getRayfinClient();
     const session = client.auth.getSession();
     if (!session.isAuthenticated || !session.user) {
@@ -84,11 +86,15 @@ export function TodoList() {
     }
 
     let priority: string | undefined;
-    try {
-      priority = await client.functions.classifyTask.invoke({ title });
-    } catch {
-      // Classification is best-effort — proceed without priority on failure.
-      priority = undefined;
+    if (mode === 'auto') {
+      try {
+        priority = await client.functions.classifyTask.invoke({ title });
+      } catch {
+        // Classification is best-effort — proceed without priority on failure.
+        priority = undefined;
+      }
+    } else {
+      priority = mode;
     }
 
     void crud.create({
@@ -102,21 +108,22 @@ export function TodoList() {
 }
 
 interface AddItemFormProps {
-  onAdd(title: string): Promise<void>;
+  onAdd(title: string, mode: PriorityMode): Promise<void>;
   disabled?: boolean;
 }
 
 function AddItemForm({ onAdd, disabled }: AddItemFormProps) {
   const [title, setTitle] = useState('');
+  const [mode, setMode] = useState<PriorityMode>('auto');
   const [classifying, setClassifying] = useState(false);
   const trimmed = title.trim();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!trimmed || classifying) return;
-    setClassifying(true);
+    if (mode === 'auto') setClassifying(true);
     try {
-      await onAdd(trimmed);
+      await onAdd(trimmed, mode);
       setTitle('');
     } finally {
       setClassifying(false);
@@ -126,26 +133,44 @@ function AddItemForm({ onAdd, disabled }: AddItemFormProps) {
   const busy = disabled || classifying;
 
   return (
-    <form onSubmit={(e) => { void handleSubmit(e); }} className="flex gap-200">
-      <label htmlFor="new-todo" className="sr-only">
-        Task title
-      </label>
-      <input
-        id="new-todo"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Add a task"
-        maxLength={200}
-        disabled={busy}
-        className="flex-1 rounded-md border border-input bg-background px-300 py-200 text-300 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-      />
-      <button
-        type="submit"
-        disabled={busy || !trimmed}
-        className="rounded-md bg-primary px-400 py-200 text-300 font-medium text-primary-foreground disabled:opacity-50"
-      >
-        {classifying ? 'Classifying…' : 'Add'}
-      </button>
+    <form onSubmit={(e) => { void handleSubmit(e); }} className="flex flex-col gap-200">
+      <div className="flex gap-200">
+        <label htmlFor="new-todo" className="sr-only">
+          Task title
+        </label>
+        <input
+          id="new-todo"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Add a task"
+          maxLength={200}
+          disabled={busy}
+          className="flex-1 rounded-md border border-input bg-background px-300 py-200 text-300 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+        />
+        <button
+          type="submit"
+          disabled={busy || !trimmed}
+          className="rounded-md bg-primary px-400 py-200 text-300 font-medium text-primary-foreground disabled:opacity-50"
+        >
+          {classifying ? 'Classifying…' : 'Add'}
+        </button>
+      </div>
+      <div className="flex items-center gap-200">
+        <label htmlFor="priority-mode" className="text-200 text-muted-foreground shrink-0">
+          Priority:
+        </label>
+        <select
+          id="priority-mode"
+          value={mode}
+          onChange={(e) => setMode(e.target.value as PriorityMode)}
+          disabled={busy}
+          className="rounded-md border border-input bg-background px-200 py-100 text-200 text-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+        >
+          <option value="auto">Auto (AI)</option>
+          <option value="Urgent">Urgent</option>
+          <option value="Non-Urgent">Non-Urgent</option>
+        </select>
+      </div>
     </form>
   );
 }
@@ -164,8 +189,8 @@ function PriorityBadge({ priority }: { priority?: string | null }) {
     <span
       className={
         urgent
-          ? 'shrink-0 rounded px-200 py-50 text-200 font-medium bg-destructive text-destructive-foreground'
-          : 'shrink-0 rounded px-200 py-50 text-200 font-medium bg-muted text-muted-foreground'
+          ? 'inline-flex items-center shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-destructive text-destructive-foreground'
+          : 'inline-flex items-center shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground'
       }
       aria-label={`Priority: ${priority}`}
     >
