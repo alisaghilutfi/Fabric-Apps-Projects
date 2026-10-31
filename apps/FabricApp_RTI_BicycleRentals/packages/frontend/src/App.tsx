@@ -4,6 +4,7 @@ import { useAppTheme } from './hooks/use-theme';
 import { cn } from './lib/utils';
 import { getStationStatus, statusConfig } from './lib/stationStatus';
 import { BackgroundGallery } from './components/BackgroundGallery';
+import { StationMap } from './components/StationMap';
 
 const BG_IMAGES = [
   // Race / action shots
@@ -140,6 +141,7 @@ export default function App() {
   const [isError, setIsError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [subDone, setSubDone] = useState<number | null>(null);
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchSnapshot = useCallback(async () => {
@@ -363,70 +365,88 @@ export default function App() {
 
             {error && <p className="text-destructive text-300 mb-300">{error}</p>}
 
-            {/* Station table */}
+            {/* Station table — scrollable, max 320px, bidirectional map sync */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <table className="w-full text-300">
-                <thead>
-                  <tr className="bg-primary text-primary-foreground">
-                    <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">ID</th>
-                    <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Street</th>
-                    <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider hidden sm:table-cell">Neighbourhood</th>
-                    <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider">Bikes</th>
-                    <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider hidden md:table-cell">Docks</th>
-                    <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stations.map((s, i) => {
-                    const status = getStationStatus(s.No_Bikes, s.No_Empty_Docks, s.BikesToBeFilled);
-                    const cfg = statusConfig[status];
-                    return (
-                      <tr
-                        key={s.BikepointID}
-                        className={cn(
-                          'border-t border-border border-l-4 transition-colors hover:bg-muted/50 cursor-pointer',
-                          cfg.border,
-                          i % 2 === 0 ? 'bg-card' : 'bg-background'
-                        )}
-                        onClick={() => { setSelected(s); setSubDone(null); setScreen('detail'); }}
-                      >
-                        <td className="px-400 py-300 font-mono text-200 text-muted-foreground">{s.BikepointID}</td>
-                        <td className="px-400 py-300 text-foreground">{s.Street}</td>
-                        <td className="px-400 py-300 text-muted-foreground hidden sm:table-cell">{s.Neighbourhood}</td>
-                        <td className="px-400 py-300 text-right">
-                          <div className="flex items-center justify-end gap-200">
-                            <span className="w-6 text-right tabular-nums text-300 font-bold" style={{ fontFamily: 'var(--font-numeric)' }}>
-                              {s.No_Bikes ?? '—'}
+              <div className="overflow-y-auto" style={{ maxHeight: '320px' }}>
+                <table className="w-full text-300">
+                  <thead className="sticky top-0 z-10">
+                    <tr className="bg-primary text-primary-foreground">
+                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">ID</th>
+                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Street</th>
+                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider hidden sm:table-cell">Neighbourhood</th>
+                      <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider">Bikes</th>
+                      <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider hidden md:table-cell">Docks</th>
+                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stations.map((s, i) => {
+                      const status = getStationStatus(s.No_Bikes, s.No_Empty_Docks, s.BikesToBeFilled);
+                      const cfg = statusConfig[status];
+                      const isMapSelected = s.BikepointID === selectedStationId;
+                      return (
+                        <tr
+                          key={s.BikepointID}
+                          ref={node => { if (node && isMapSelected) node.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }}
+                          className={cn(
+                            'border-t border-border border-l-4 transition-colors cursor-pointer',
+                            cfg.border,
+                            isMapSelected
+                              ? 'bg-primary/10'
+                              : i % 2 === 0 ? 'hover:bg-muted/50 bg-card' : 'hover:bg-muted/50 bg-background'
+                          )}
+                          onClick={() => {
+                            setSelectedStationId(s.BikepointID);
+                            setSelected(s); setSubDone(null); setScreen('detail');
+                          }}
+                        >
+                          <td className="px-400 py-300 font-mono text-200 text-muted-foreground">{s.BikepointID}</td>
+                          <td className="px-400 py-300 text-foreground">{s.Street}</td>
+                          <td className="px-400 py-300 text-muted-foreground hidden sm:table-cell">{s.Neighbourhood}</td>
+                          <td className="px-400 py-300 text-right">
+                            <div className="flex items-center justify-end gap-200">
+                              <span className="w-6 text-right tabular-nums text-300 font-bold" style={{ fontFamily: 'var(--font-numeric)' }}>
+                                {s.No_Bikes ?? '—'}
+                              </span>
+                              {typeof s.No_Bikes === 'number' && typeof s.No_Empty_Docks === 'number' && s.No_Bikes + s.No_Empty_Docks > 0 && (
+                                <div className="w-14 h-1.5 rounded-full bg-muted overflow-hidden">
+                                  <div
+                                    className={cn('h-full rounded-full', cfg.bar)}
+                                    style={{
+                                      width: `${Math.round((s.No_Bikes / (s.No_Bikes + s.No_Empty_Docks)) * 100)}%`
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-400 py-300 text-right text-muted-foreground hidden md:table-cell">
+                            {s.No_Empty_Docks ?? '—'}
+                          </td>
+                          <td className="px-400 py-300">
+                            <span className={cn(
+                              'px-200 py-100 rounded-full text-100 font-medium',
+                              cfg.bg,
+                              cfg.text
+                            )}>
+                              {cfg.label}
                             </span>
-                            {typeof s.No_Bikes === 'number' && typeof s.No_Empty_Docks === 'number' && s.No_Bikes + s.No_Empty_Docks > 0 && (
-                              <div className="w-14 h-1.5 rounded-full bg-muted overflow-hidden">
-                                <div
-                                  className={cn('h-full rounded-full', cfg.bar)}
-                                  style={{
-                                    width: `${Math.round((s.No_Bikes / (s.No_Bikes + s.No_Empty_Docks)) * 100)}%`
-                                  }}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-400 py-300 text-right text-muted-foreground hidden md:table-cell">
-                          {s.No_Empty_Docks ?? '—'}
-                        </td>
-                        <td className="px-400 py-300">
-                          <span className={cn(
-                            'px-200 py-100 rounded-full text-100 font-medium',
-                            cfg.bg,
-                            cfg.text
-                          )}>
-                            {cfg.label}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Interactive map */}
+            <div className="mt-400 rounded-xl overflow-hidden bg-background/80 backdrop-blur-sm" style={{ height: '360px' }}>
+              <StationMap
+                stations={stations}
+                selectedId={selectedStationId}
+                onSelectStation={id => setSelectedStationId(id)}
+              />
             </div>
           </>
           </div>
