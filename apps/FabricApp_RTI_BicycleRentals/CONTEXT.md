@@ -36,15 +36,27 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
 - rpt_RTI_BicycleRentals: blocked on Trial capacity (manifest.json 404)
 - es_RTI_BicycleRentals Eventstream: may go inactive -- restart via Fabric portal if KQL counts stale
 
-## Last Session -- 2026-10-30
+## Last Session -- 2026-10-31
 
 ### What was done
-- Diagnosed and fixed `fabric-rti-mcp` connection for Claude Code
-  - Correct registration file: `~/.claude.json` (mcpServers key)
-  - Registered without `--use-obo-flow` (requires CLIENT_ID/SECRET -- not available)
-  - Granted `Fabric-VSCode-MCP` SP (`81339ad5-15a6-4740-adee-c7a3efdcf1a7`) Read access on `eh_RTI_BicycleRentals` Eventhouse
-  - Auth: server uses DefaultAzureCredential -- `az login` must run BEFORE Claude Code starts
-- Ran full schema investigation (Q1-Q7) against Eventhouse
+- Restarted Eventstream (was stale since 2026-10-22); confirmed `rowsLast1h = 1020`
+- Implemented Network Overview Polish Phase 1 (all steps):
+  - `global.css`: status colour tokens + `live-dot` keyframe animation
+  - New `src/lib/stationStatus.ts`: `getStationStatus()` + `statusConfig` (with explicit `bar` field)
+  - `App.tsx`: `fetchSnapshot` / `startPolling` replace `loadOverview`; 30s `setInterval` via `intervalRef`
+  - Live pulsing dot in AppHeader (green = live, grey = error); `showLiveDot`/`isError` props
+  - LAST SNAPSHOT KPI card: wall-clock time from `lastUpdated` state; stale (>5min) turns amber
+  - Station table rows: `border-l-4` status colour, status badge, utilisation bar (number + mini bar)
+  - Detail + Rebalancing Queue screens updated to use `statusConfig` badges + row border colours
+  - LOW STOCK % / UTILIZATION % KPI values colour-coded at thresholds
+- Deployed via `rayfin up` -- live at https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net
+- Committed: `54bd392` feat: status badges, utilisation bars, 30s auto-poll, live indicator dot
+
+### Build notes (session-specific gotchas)
+- `node_modules` was absent -- required `npm install` from app root before typecheck/build
+- `packages/shared/dist/index.d.ts` was missing (prior build left only `.js`) -- fixed with `tsc -b --force` on shared before `rayfin up`
+- `tsc` not on system PATH; use `node node_modules/typescript/bin/tsc -b <tsconfig>` for manual typecheck
+- Pre-existing typecheck errors in `data` (TS7016 on `@rayfin-app/shared`) and `Welcome.tsx` (lucide-react) -- unrelated to this session's changes; still 3 scaffold failures in Root.spec.tsx
 
 ### Confirmed schema -- TransformedData (Silver)
 | Column | Type | Notes |
@@ -65,30 +77,15 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
 - `TransformRawData()` -- Bronze -> Silver transform
 - `AggregatedData` MV -- only 3 columns (BikepointID, Timestamp, No_Bikes) -- **not suitable for chart**
 
-### Status badge logic (confirmed)
+### Status badge logic (implemented in stationStatus.ts)
 ```typescript
-// Action is string: "NA" when BikesToBeFilled <= 0, numeric string otherwise
-// BikesToBeFilled is long: negative = overfull
-function getStatus(bikes: number, emptyDocks: number, bikesToBeFilled: number | null) {
-  const capacity = bikes + emptyDocks;
-  if (capacity === 0) return 'unknown';
-  if (bikesToBeFilled !== null && bikesToBeFilled < 0) return 'over';
-  const pct = bikes / capacity;
-  if (pct === 0) return 'empty';
-  if (pct < 0.2) return 'low';
-  return 'available';
-}
+// BikesToBeFilled is long: negative = overfull (Action = "NA" in that case)
+// status: 'available' | 'low' | 'empty' | 'over' | 'unknown'
+// pct < 0.2 = low; pct === 0 = empty; bikesToBeFilled < 0 = over
 ```
 
-### Critical blocker -- Eventstream stopped
-- Last ingestion: 2026-10-22 (~8 days stale)
-- `rowsLast1h = 0`, `rowsLast24h = 0`
-- **Must restart Eventstream before any frontend polling work is meaningful**
-- Portal showed "Capacity delays" -- likely cause
-
 ### Next session priorities
-1. Restart Eventstream -> verify `rowsLast1h > 0`
-2. Implement status badges using `LatestStationSnapshot()` query
-3. Implement 30s auto-poll
-4. Add live indicator dot to header
-5. Chart decision: drop for now; add Option B sparkline only after stream confirmed live
+1. Browser validation (confirm live dot, badges, bars render in light + dark)
+2. Optional: neighbourhood filter dropdown on Network Overview
+3. Optional: mark-resolved flow on Rebalancing Queue (set resolvedAt)
+4. Chart/sparkline: deferred -- revisit after confirming Eventstream stays stable
