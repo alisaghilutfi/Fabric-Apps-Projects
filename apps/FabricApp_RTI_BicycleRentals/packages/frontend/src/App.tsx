@@ -6,12 +6,12 @@ import { getStationStatus, statusConfig } from './lib/stationStatus';
 import { BackgroundGallery } from './components/BackgroundGallery';
 
 const BG_IMAGES = [
-  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80',
-  'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=1920&q=80',
-  'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=1920&q=80',
-  'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=1920&q=80',
   'https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?w=1920&q=80',
-  'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1920&q=80',
+  'https://images.unsplash.com/photo-1605235186583-a8c64a3dbbf7?w=1920&q=80',
+  'https://images.unsplash.com/photo-1528629297340-d1d466945dc5?w=1920&q=80',
+  'https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=1920&q=80',
+  'https://images.unsplash.com/photo-1519583272095-6433daf26b6e?w=1920&q=80',
+  'https://images.unsplash.com/photo-1508193638397-1cc4592bf3b0?w=1920&q=80',
 ];
 
 function AppHeader({
