@@ -176,6 +176,25 @@
   }
 }
 
+/* Status tokens */
+@theme {
+  --color-status-available: #107c10;
+  --color-status-available-surface: #dff6dd;
+  --color-status-low: #d83b01;
+  --color-status-low-surface: #fde7e9;
+  --color-status-empty: #605e5c;
+  --color-status-empty-surface: #edebe9;
+  --color-status-over: #8764b8;
+  --color-status-over-surface: #f4eeff;
+}
+
+/* Live indicator */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+.live-dot { animation: live-pulse 2s ease-in-out infinite; }
+
 @layer base {
   * {
     @apply border-border;

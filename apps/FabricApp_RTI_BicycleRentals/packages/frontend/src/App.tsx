@@ -1,18 +1,23 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { getRayfinClient } from './lib/rayfin-client';
 import { useAppTheme } from './hooks/use-theme';
 import { cn } from './lib/utils';
+import { getStationStatus, statusConfig } from './lib/stationStatus';
 
 function AppHeader({
   isDark,
   toggleTheme,
   back,
   backLabel,
+  showLiveDot,
+  isError,
 }: {
   isDark: boolean;
   toggleTheme: () => void;
   back?: () => void;
   backLabel?: string;
+  showLiveDot?: boolean;
+  isError?: boolean;
 }) {
   return (
     <header className="flex items-center justify-between px-600 py-300 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
@@ -28,6 +33,15 @@ function AppHeader({
         <span className="text-400 font-semibold tracking-tight text-foreground">
           🚲 Bicycle Rentals — Live Monitor
         </span>
+        {showLiveDot && (
+          <span
+            className={cn(
+              'inline-block w-2 h-2 rounded-full ml-2 align-middle',
+              isError ? 'bg-[var(--color-status-empty)]' : 'live-dot bg-[var(--color-status-available)]'
+            )}
+            title={isError ? 'Connection error' : 'Live — updating every 30s'}
+          />
+        )}
       </div>
       <button
         onClick={toggleTheme}
@@ -78,11 +92,6 @@ function fmt(value: string | number | null, name?: string): string {
   return String(value);
 }
 
-function actionBadge(action: string) {
-  if (action === 'Fill') return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-  if (action === 'Empty') return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
-  return 'bg-muted text-muted-foreground';
-}
 
 function BikeBg() {
   return (
@@ -116,9 +125,12 @@ export default function App() {
   const [rebalanceStations, setRebalanceStations] = useState<StationRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [subDone, setSubDone] = useState<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  async function loadOverview() {
+  const fetchSnapshot = useCallback(async () => {
     setError('');
     setLoading(true);
     try {
@@ -161,12 +173,27 @@ export default function App() {
 
       setKpis(kpiRows);
       setStations(stationRows);
+      setIsError(false);
+      setLastUpdated(new Date());
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Query failed');
+      setIsError(true);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  const startPolling = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    fetchSnapshot();
+    intervalRef.current = setInterval(fetchSnapshot, 30_000);
+  }, [fetchSnapshot]);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   async function loadRebalancing() {
     setError('');
@@ -223,7 +250,7 @@ export default function App() {
   // Screen: Overview (entry point + KPI + station table)
   if (screen === 'overview') return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <AppHeader isDark={isDark} toggleTheme={toggleTheme} />
+      <AppHeader isDark={isDark} toggleTheme={toggleTheme} showLiveDot={stations.length > 0} isError={isError} />
       <main className="flex-1 px-600 py-500 max-w-5xl mx-auto w-full">
         {stations.length === 0 && !loading && (
           <div className="flex-1 flex flex-col items-center justify-center py-800 relative overflow-hidden">
@@ -237,7 +264,7 @@ export default function App() {
               </p>
               {error && <p className="text-destructive text-300 mb-400">{error}</p>}
               <button
-                onClick={loadOverview}
+                onClick={startPolling}
                 disabled={loading}
                 className="bg-primary text-primary-foreground rounded-lg px-600 py-300 text-300 font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
               >
@@ -258,16 +285,44 @@ export default function App() {
             {/* KPI Cards */}
             {kpis.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-300 mb-600">
-                {kpis.map(k => (
-                  <div key={k.name} className="bg-card border border-border rounded-xl p-400">
-                    <div className="text-100 text-muted-foreground uppercase tracking-widest font-mono mb-100 truncate">
-                      {KPI_LABELS[k.name] ?? k.name.toUpperCase()}
+                {kpis.map(k => {
+                  const label = KPI_LABELS[k.name] ?? k.name.toUpperCase();
+                  const isSnapshot = label === 'LAST SNAPSHOT';
+                  const isLowStock = label === 'LOW STOCK %';
+                  const isUtilization = label === 'UTILIZATION %';
+
+                  let valueClass = 'text-500 font-bold text-foreground';
+                  if (isLowStock && typeof k.value === 'number') {
+                    if (k.value > 0.15) valueClass = 'text-500 font-bold text-[var(--color-status-empty)]';
+                    else if (k.value > 0.05) valueClass = 'text-500 font-bold text-[var(--color-status-low)]';
+                  }
+                  if (isUtilization && typeof k.value === 'number') {
+                    if (k.value < 0.2) valueClass = 'text-500 font-bold text-[var(--color-status-empty)]';
+                    else if (k.value > 0.8) valueClass = 'text-500 font-bold text-[var(--color-status-low)]';
+                  }
+
+                  const snapshotStale = lastUpdated !== null && (new Date().getTime() - lastUpdated.getTime()) > 5 * 60 * 1000;
+                  const snapshotClass = isSnapshot
+                    ? (lastUpdated === null || snapshotStale)
+                      ? 'text-300 font-bold text-[var(--color-status-low)]'
+                      : 'text-300 font-bold text-foreground'
+                    : valueClass;
+
+                  return (
+                    <div key={k.name} className="bg-card border border-border rounded-xl p-400">
+                      <div className="text-100 text-muted-foreground uppercase tracking-widest font-mono mb-100 truncate">
+                        {label}
+                      </div>
+                      <div className={snapshotClass} style={{ fontFamily: 'var(--font-numeric)' }}>
+                        {isSnapshot
+                          ? lastUpdated
+                            ? lastUpdated.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                            : '—'
+                          : fmt(k.value, k.name)}
+                      </div>
                     </div>
-                    <div className="text-500 font-bold text-foreground" style={{ fontFamily: 'var(--font-numeric)' }}>
-                      {fmt(k.value, k.name)}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -276,7 +331,7 @@ export default function App() {
               <h2 className="text-400 font-semibold">{stations.length} Stations</h2>
               <div className="flex gap-300">
                 <button
-                  onClick={loadOverview}
+                  onClick={startPolling}
                   disabled={loading}
                   className="text-300 text-muted-foreground hover:text-foreground border border-border rounded-lg px-400 py-200 transition-colors disabled:opacity-50"
                 >
@@ -304,39 +359,58 @@ export default function App() {
                     <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider hidden sm:table-cell">Neighbourhood</th>
                     <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider">Bikes</th>
                     <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider hidden md:table-cell">Docks</th>
-                    <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Action</th>
+                    <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {stations.map((s, i) => (
-                    <tr
-                      key={s.BikepointID}
-                      className={cn(
-                        'border-t border-border transition-colors hover:bg-muted/50 cursor-pointer',
-                        i % 2 === 0 ? 'bg-card' : 'bg-background'
-                      )}
-                      onClick={() => { setSelected(s); setSubDone(null); setScreen('detail'); }}
-                    >
-                      <td className="px-400 py-300 font-mono text-200 text-muted-foreground">{s.BikepointID}</td>
-                      <td className="px-400 py-300 text-foreground">{s.Street}</td>
-                      <td className="px-400 py-300 text-muted-foreground hidden sm:table-cell">{s.Neighbourhood}</td>
-                      <td className="px-400 py-300 text-right font-bold" style={{ fontFamily: 'var(--font-numeric)' }}>
-                        {s.No_Bikes ?? '—'}
-                      </td>
-                      <td className="px-400 py-300 text-right text-muted-foreground hidden md:table-cell">
-                        {s.No_Empty_Docks ?? '—'}
-                      </td>
-                      <td className="px-400 py-300">
-                        {s.Action && s.Action !== 'OK' ? (
-                          <span className={cn('text-100 font-semibold px-300 py-100 rounded-full uppercase tracking-widest', actionBadge(s.Action))}>
-                            {s.Action}
-                          </span>
-                        ) : (
-                          <span className="text-100 text-muted-foreground">OK</span>
+                  {stations.map((s, i) => {
+                    const status = getStationStatus(s.No_Bikes, s.No_Empty_Docks, s.BikesToBeFilled);
+                    const cfg = statusConfig[status];
+                    return (
+                      <tr
+                        key={s.BikepointID}
+                        className={cn(
+                          'border-t border-border border-l-4 transition-colors hover:bg-muted/50 cursor-pointer',
+                          cfg.border,
+                          i % 2 === 0 ? 'bg-card' : 'bg-background'
                         )}
-                      </td>
-                    </tr>
-                  ))}
+                        onClick={() => { setSelected(s); setSubDone(null); setScreen('detail'); }}
+                      >
+                        <td className="px-400 py-300 font-mono text-200 text-muted-foreground">{s.BikepointID}</td>
+                        <td className="px-400 py-300 text-foreground">{s.Street}</td>
+                        <td className="px-400 py-300 text-muted-foreground hidden sm:table-cell">{s.Neighbourhood}</td>
+                        <td className="px-400 py-300 text-right">
+                          <div className="flex items-center justify-end gap-200">
+                            <span className="w-6 text-right tabular-nums text-300 font-bold" style={{ fontFamily: 'var(--font-numeric)' }}>
+                              {s.No_Bikes ?? '—'}
+                            </span>
+                            {typeof s.No_Bikes === 'number' && typeof s.No_Empty_Docks === 'number' && s.No_Bikes + s.No_Empty_Docks > 0 && (
+                              <div className="w-14 h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className={cn('h-full rounded-full', cfg.bar)}
+                                  style={{
+                                    width: `${Math.round((s.No_Bikes / (s.No_Bikes + s.No_Empty_Docks)) * 100)}%`
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-400 py-300 text-right text-muted-foreground hidden md:table-cell">
+                          {s.No_Empty_Docks ?? '—'}
+                        </td>
+                        <td className="px-400 py-300">
+                          <span className={cn(
+                            'px-200 py-100 rounded-full text-100 font-medium',
+                            cfg.bg,
+                            cfg.text
+                          )}>
+                            {cfg.label}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -347,7 +421,10 @@ export default function App() {
   );
 
   // Screen: Station Detail
-  if (screen === 'detail' && selected) return (
+  if (screen === 'detail' && selected) {
+    const detailStatus = getStationStatus(selected.No_Bikes, selected.No_Empty_Docks, selected.BikesToBeFilled);
+    const detailCfg = statusConfig[detailStatus];
+    return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <AppHeader isDark={isDark} toggleTheme={toggleTheme} back={() => setScreen('overview')} backLabel="Network" />
       <main className="flex-1 px-600 py-500 max-w-2xl mx-auto w-full">
@@ -355,11 +432,9 @@ export default function App() {
           <span className="font-mono text-200 text-muted-foreground bg-muted px-300 py-100 rounded">
             #{selected.BikepointID}
           </span>
-          {selected.Action && selected.Action !== 'OK' && (
-            <span className={cn('text-100 font-semibold px-300 py-100 rounded-full uppercase tracking-widest', actionBadge(selected.Action))}>
-              {selected.Action}
-            </span>
-          )}
+          <span className={cn('text-100 font-medium px-200 py-100 rounded-full', detailCfg.bg, detailCfg.text)}>
+            {detailCfg.label}
+          </span>
         </div>
         <h2 className="text-hero-700 font-bold leading-hero-700 mb-100">{selected.Street}</h2>
         <p className="text-300 text-muted-foreground mb-600">{selected.Neighbourhood}</p>
@@ -414,6 +489,7 @@ export default function App() {
       </main>
     </div>
   );
+  }
 
   // Screen: Rebalancing Queue
   return (
@@ -446,11 +522,15 @@ export default function App() {
                 </tr>
               </thead>
               <tbody>
-                {rebalanceStations.map((s, i) => (
+                {rebalanceStations.map((s, i) => {
+                  const rStatus = getStationStatus(s.No_Bikes, s.No_Empty_Docks, s.BikesToBeFilled);
+                  const rCfg = statusConfig[rStatus];
+                  return (
                   <tr
                     key={s.BikepointID}
                     className={cn(
-                      'border-t border-border',
+                      'border-t border-border border-l-4',
+                      rCfg.border,
                       i % 2 === 0 ? 'bg-card' : 'bg-background'
                     )}
                   >
@@ -469,8 +549,8 @@ export default function App() {
                       {s.BikesToBeFilled ?? '—'}
                     </td>
                     <td className="px-400 py-300">
-                      <span className={cn('text-100 font-semibold px-300 py-100 rounded-full uppercase tracking-widest', actionBadge(s.Action))}>
-                        {s.Action}
+                      <span className={cn('px-200 py-100 rounded-full text-100 font-medium', rCfg.bg, rCfg.text)}>
+                        {rCfg.label}
                       </span>
                     </td>
                     <td className="px-400 py-300 text-right">
@@ -487,7 +567,8 @@ export default function App() {
                       )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
