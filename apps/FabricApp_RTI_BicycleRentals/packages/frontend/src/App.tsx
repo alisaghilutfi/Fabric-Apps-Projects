@@ -194,9 +194,28 @@ export default function App() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchSparkline = useCallback(async () => {
-    // Requires TransformedData table in sm_rti_bicyclerentals.
-    // Will be wired once the SM is updated to expose TransformedData.
-    setSparklineData([]);
+    try {
+      const client = await getRayfinClient();
+      const result = await client.connectors.sm_rti_bicyclerentals.executeQuery({
+        query: `EVALUATE 'Station History'`,
+      });
+      if (result.status === 'success' && result.table.rows.length > 0) {
+        const cols = result.table.columns.map(c =>
+          c.name.includes('[') ? c.name.split('[')[1].replace(']', '') : c.name
+        );
+        const tsIdx = cols.findIndex(c => c === 'Timestamp');
+        const totalIdx = cols.findIndex(c => c === 'total_bikes');
+        if (tsIdx >= 0 && totalIdx >= 0) {
+          const bins: SparklineBin[] = result.table.rows.map(row => ({
+            ts: String(row[tsIdx]),
+            total: Number(row[totalIdx]),
+          }));
+          setSparklineData(bins);
+        }
+      }
+    } catch {
+      // sparkline is non-critical; fail silently
+    }
   }, []);
 
   const fetchSnapshot = useCallback(async () => {
