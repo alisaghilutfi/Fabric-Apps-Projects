@@ -6,12 +6,14 @@ import { getStationStatus, statusConfig } from './lib/stationStatus';
 import { BackgroundGallery } from './components/BackgroundGallery';
 
 const BG_IMAGES = [
-  'https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?w=1920&q=80',
-  'https://images.unsplash.com/photo-1605235186583-a8c64a3dbbf7?w=1920&q=80',
-  'https://images.unsplash.com/photo-1528629297340-d1d466945dc5?w=1920&q=80',
-  'https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=1920&q=80',
-  'https://images.unsplash.com/photo-1519583272095-6433daf26b6e?w=1920&q=80',
-  'https://images.unsplash.com/photo-1508193638397-1cc4592bf3b0?w=1920&q=80',
+  // Race / action shots
+  'https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=1920&q=80', // two helmeted road cyclists, beach road
+  'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1920&q=80', // cycling race peloton
+  'https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?w=1920&q=80', // solo cyclist mountain road
+  // Bike sharing stations
+  'https://images.pexels.com/photos/3671179/pexels-photo-3671179.jpeg?w=1920&q=80', // teal rental bikes Beijing
+  'https://images.pexels.com/photos/2870243/pexels-photo-2870243.jpeg?w=1920&q=80', // colourful numbered rental bikes
+  'https://images.pexels.com/photos/12217616/pexels-photo-12217616.jpeg?w=1920&q=80', // Citi Bike docking station NYC
 ];
 
 function AppHeader({
