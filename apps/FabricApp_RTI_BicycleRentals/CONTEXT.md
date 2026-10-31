@@ -95,9 +95,33 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
 - Type key `'over'`, display label `'Full'`; `'available'` | `'low'` | `'empty'` | `'over'` | `'unknown'`
 - pct < 0.2 = low; pct === 0 = empty; bikesToBeFilled < 0 = over/Full
 
+**Phase 3 — Background image replacement (2026-10-31, same session)**
+- Replaced all 6 BG_IMAGES with verified images: 3 cycling race shots (Unsplash) + 3 bike-sharing station shots (Pexels)
+- All images verified visually before deploy (WebFetch + Read tool as image)
+- Committed: `14d06e1`
+
+**Phase 4 — Interactive Leaflet map (2026-10-31, same session)**
+- Installed: `leaflet` + `@types/leaflet` (no API key, OpenStreetMap tiles)
+- New `src/lib/mapMarkers.ts`: `createCircleMarker()` — status-coloured `L.circleMarker`, radius 8/14 (normal/selected)
+- New `src/components/StationMap.tsx`: map init once (London 51.505/-0.09, zoom 12), markers rebuilt on stations/selectedId change, tooltip on hover, click fires `onSelectStation`
+- `App.tsx`: `selectedStationId` state; table now scrollable (max 320px), sticky thead; row `ref` callback auto-scrolls selected row into view; map panel 360px below table
+- Bidirectional sync: table row click → map pans + dot enlarges; map dot click → row highlights + scrolls into view
+- Vite icon-path fix: `delete L.Icon.Default.prototype._getIconUrl` + `mergeOptions` in StationMap.tsx
+- Committed: `35c53a8`, pushed, deployed
+
+### Build notes (persistent gotchas)
+- `tsc` not on system PATH; use `node node_modules/typescript/bin/tsc -b <tsconfig>` for manual typecheck
+- Before every `rayfin up`: rebuild shared with `--force` then data (otherwise `index.d.ts` may be missing)
+  ```powershell
+  $tsc = ".\node_modules\typescript\bin\tsc"
+  node $tsc -b packages/shared --force
+  node $tsc -b packages/data
+  ```
+- Pre-existing typecheck errors: `data` (TS7016 `@rayfin-app/shared`), `Welcome.tsx` (lucide-react) -- unrelated; 3 scaffold failures in Root.spec.tsx remain
+- Frontend standalone typecheck (no project refs): `node ..\..\node_modules\typescript\bin\tsc --noEmit` from `packages/frontend`
+
 ### Next session priorities
-1. Browser validation (confirm badges, bars, background gallery, frosted glass in light + dark)
+1. Browser validation — map: confirm 120 dots render, colour-coding matches badges, bidirectional sync works, tooltip shows
 2. Optional: neighbourhood filter dropdown on Network Overview
 3. Optional: mark-resolved flow on Rebalancing Queue (set resolvedAt)
-4. Chart/sparkline: deferred -- revisit after Eventstream stability confirmed
-5. Map view (Latitude/Longitude available): consider Leaflet overlay as P4
+4. Chart/sparkline: deferred -- revisit after Eventstream stability confirmed (AggregatedData MV only has 3 cols, not suitable)
