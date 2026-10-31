@@ -38,25 +38,39 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
 
 ## Last Session -- 2026-10-31
 
-### What was done
-- Restarted Eventstream (was stale since 2026-10-22); confirmed `rowsLast1h = 1020`
-- Implemented Network Overview Polish Phase 1 (all steps):
-  - `global.css`: status colour tokens + `live-dot` keyframe animation
-  - New `src/lib/stationStatus.ts`: `getStationStatus()` + `statusConfig` (with explicit `bar` field)
-  - `App.tsx`: `fetchSnapshot` / `startPolling` replace `loadOverview`; 30s `setInterval` via `intervalRef`
-  - Live pulsing dot in AppHeader (green = live, grey = error); `showLiveDot`/`isError` props
-  - LAST SNAPSHOT KPI card: wall-clock time from `lastUpdated` state; stale (>5min) turns amber
-  - Station table rows: `border-l-4` status colour, status badge, utilisation bar (number + mini bar)
-  - Detail + Rebalancing Queue screens updated to use `statusConfig` badges + row border colours
-  - LOW STOCK % / UTILIZATION % KPI values colour-coded at thresholds
-- Deployed via `rayfin up` -- live at https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net
-- Committed: `54bd392` feat: status badges, utilisation bars, 30s auto-poll, live indicator dot
+### What was done (Phase 1 + Phase 2, same session)
 
-### Build notes (session-specific gotchas)
-- `node_modules` was absent -- required `npm install` from app root before typecheck/build
-- `packages/shared/dist/index.d.ts` was missing (prior build left only `.js`) -- fixed with `tsc -b --force` on shared before `rayfin up`
+**Phase 1 — Network Overview Polish**
+- Restarted Eventstream (was stale since 2026-10-22); confirmed `rowsLast1h = 1020`
+- `global.css`: status colour tokens + `live-dot` keyframe animation
+- New `src/lib/stationStatus.ts`: `getStationStatus()` + `statusConfig` (with explicit `bar` field)
+- `App.tsx`: `fetchSnapshot` / `startPolling` replace `loadOverview`; 30s `setInterval` via `intervalRef`
+- Live pulsing dot in AppHeader (green = live, grey = error); `showLiveDot`/`isError` props
+- LAST SNAPSHOT KPI card: wall-clock time from `lastUpdated` state; stale (>5min) turns amber
+- Station table rows: `border-l-4` status colour, status badge, utilisation bar (number + mini bar)
+- Detail + Rebalancing Queue screens updated to use `statusConfig` badges + row border colours
+- LOW STOCK % / UTILIZATION % KPI values colour-coded at thresholds
+- Committed: `54bd392`
+
+**Phase 2 — Full badge rename, utilisation threshold, background imagery**
+- `stationStatus.ts`: `over` label renamed "Over" → "Full"
+- New `src/components/BackgroundGallery.tsx`: 6 Unsplash cycling images, 20s crossfade, dot nav, dark overlay
+- All 3 screens: `<BackgroundGallery>` mounted, `bg-background` removed from root div
+- All 3 screens: frosted-glass content panels (`bg-background/80 backdrop-blur-sm rounded-2xl`) wrapping content
+- Header: updated to frosted backdrop
+- UTILIZATION % threshold colouring was already in place from Phase 1
+- Committed: `c873b29`
+- Deployed: https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net
+
+### Build notes (persistent gotchas)
 - `tsc` not on system PATH; use `node node_modules/typescript/bin/tsc -b <tsconfig>` for manual typecheck
-- Pre-existing typecheck errors in `data` (TS7016 on `@rayfin-app/shared`) and `Welcome.tsx` (lucide-react) -- unrelated to this session's changes; still 3 scaffold failures in Root.spec.tsx
+- Before every `rayfin up`: rebuild shared with `--force` then data (otherwise `index.d.ts` may be missing)
+  ```powershell
+  $tsc = ".\node_modules\typescript\bin\tsc"
+  node $tsc -b packages/shared --force
+  node $tsc -b packages/data
+  ```
+- Pre-existing typecheck errors: `data` (TS7016 `@rayfin-app/shared`), `Welcome.tsx` (lucide-react) -- unrelated; 3 scaffold failures in Root.spec.tsx remain
 
 ### Confirmed schema -- TransformedData (Silver)
 | Column | Type | Notes |
@@ -73,19 +87,17 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
 | Action | string | "NA" or numeric string |
 
 ### Confirmed functions
-- `LatestStationSnapshot()` -- `arg_max(Timestamp, *) by BikepointID` -- 120 rows, all columns -- **use this for the live poll query**
+- `LatestStationSnapshot()` -- `arg_max(Timestamp, *) by BikepointID` -- 120 rows, all columns
 - `TransformRawData()` -- Bronze -> Silver transform
-- `AggregatedData` MV -- only 3 columns (BikepointID, Timestamp, No_Bikes) -- **not suitable for chart**
+- `AggregatedData` MV -- only 3 columns (BikepointID, Timestamp, No_Bikes) -- not suitable for chart
 
 ### Status badge logic (implemented in stationStatus.ts)
-```typescript
-// BikesToBeFilled is long: negative = overfull (Action = "NA" in that case)
-// status: 'available' | 'low' | 'empty' | 'over' | 'unknown'
-// pct < 0.2 = low; pct === 0 = empty; bikesToBeFilled < 0 = over
-```
+- Type key `'over'`, display label `'Full'`; `'available'` | `'low'` | `'empty'` | `'over'` | `'unknown'`
+- pct < 0.2 = low; pct === 0 = empty; bikesToBeFilled < 0 = over/Full
 
 ### Next session priorities
-1. Browser validation (confirm live dot, badges, bars render in light + dark)
+1. Browser validation (confirm badges, bars, background gallery, frosted glass in light + dark)
 2. Optional: neighbourhood filter dropdown on Network Overview
 3. Optional: mark-resolved flow on Rebalancing Queue (set resolvedAt)
-4. Chart/sparkline: deferred -- revisit after confirming Eventstream stays stable
+4. Chart/sparkline: deferred -- revisit after Eventstream stability confirmed
+5. Map view (Latitude/Longitude available): consider Leaflet overlay as P4
