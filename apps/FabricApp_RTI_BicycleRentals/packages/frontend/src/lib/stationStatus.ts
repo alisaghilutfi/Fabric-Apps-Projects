@@ -43,7 +43,7 @@ export const statusConfig: Record<StationStatus, {
     bar: 'bg-[var(--color-status-empty)]',
   },
   over: {
-    label: 'Over',
+    label: 'Full',
     bg: 'bg-[var(--color-status-over-surface)]',
     text: 'text-[var(--color-status-over)]',
     border: 'border-l-[var(--color-status-over)]',

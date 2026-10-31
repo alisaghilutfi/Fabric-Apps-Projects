@@ -3,6 +3,16 @@ import { getRayfinClient } from './lib/rayfin-client';
 import { useAppTheme } from './hooks/use-theme';
 import { cn } from './lib/utils';
 import { getStationStatus, statusConfig } from './lib/stationStatus';
+import { BackgroundGallery } from './components/BackgroundGallery';
+
+const BG_IMAGES = [
+  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80',
+  'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=1920&q=80',
+  'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=1920&q=80',
+  'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=1920&q=80',
+  'https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?w=1920&q=80',
+  'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1920&q=80',
+];
 
 function AppHeader({
   isDark,
@@ -20,7 +30,7 @@ function AppHeader({
   isError?: boolean;
 }) {
   return (
-    <header className="flex items-center justify-between px-600 py-300 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+    <header className="flex items-center justify-between px-600 py-300 border-b border-border bg-background/80 dark:bg-background/85 backdrop-blur-sm sticky top-0 z-10">
       <div className="flex items-center gap-300">
         {back && (
           <button
@@ -249,13 +259,14 @@ export default function App() {
 
   // Screen: Overview (entry point + KPI + station table)
   if (screen === 'overview') return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen text-foreground flex flex-col">
+      <BackgroundGallery images={BG_IMAGES} />
       <AppHeader isDark={isDark} toggleTheme={toggleTheme} showLiveDot={stations.length > 0} isError={isError} />
       <main className="flex-1 px-600 py-500 max-w-5xl mx-auto w-full">
         {stations.length === 0 && !loading && (
           <div className="flex-1 flex flex-col items-center justify-center py-800 relative overflow-hidden">
             <BikeBg />
-            <div className="relative z-10 text-center max-w-md">
+            <div className="relative z-10 text-center max-w-md bg-background/80 backdrop-blur-sm rounded-2xl p-800">
               <h1 className="text-hero-700 font-bold leading-hero-700 text-foreground mb-200">
                 Network Overview
               </h1>
@@ -281,7 +292,8 @@ export default function App() {
         )}
 
         {stations.length > 0 && (
-          <>
+          <div className="bg-background/80 dark:bg-background/85 backdrop-blur-sm rounded-2xl p-600">
+            <>
             {/* KPI Cards */}
             {kpis.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-300 mb-600">
@@ -415,6 +427,7 @@ export default function App() {
               </table>
             </div>
           </>
+          </div>
         )}
       </main>
     </div>
@@ -425,9 +438,11 @@ export default function App() {
     const detailStatus = getStationStatus(selected.No_Bikes, selected.No_Empty_Docks, selected.BikesToBeFilled);
     const detailCfg = statusConfig[detailStatus];
     return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen text-foreground flex flex-col">
+      <BackgroundGallery images={BG_IMAGES} />
       <AppHeader isDark={isDark} toggleTheme={toggleTheme} back={() => setScreen('overview')} backLabel="Network" />
       <main className="flex-1 px-600 py-500 max-w-2xl mx-auto w-full">
+        <div className="bg-background/80 dark:bg-background/85 backdrop-blur-sm rounded-2xl p-600">
         <div className="mb-200 flex items-center gap-300">
           <span className="font-mono text-200 text-muted-foreground bg-muted px-300 py-100 rounded">
             #{selected.BikepointID}
@@ -486,6 +501,7 @@ export default function App() {
             </button>
           )
         )}
+        </div>
       </main>
     </div>
   );
@@ -493,9 +509,11 @@ export default function App() {
 
   // Screen: Rebalancing Queue
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen text-foreground flex flex-col">
+      <BackgroundGallery images={BG_IMAGES} />
       <AppHeader isDark={isDark} toggleTheme={toggleTheme} back={() => setScreen('overview')} backLabel="Network" />
       <main className="flex-1 px-600 py-500 max-w-4xl mx-auto w-full">
+        <div className="bg-background/80 dark:bg-background/85 backdrop-blur-sm rounded-2xl p-600">
         <h2 className="text-hero-700 font-bold leading-hero-700 mb-100">Rebalancing Queue</h2>
         <p className="text-200 text-muted-foreground mb-500 uppercase tracking-widest font-mono">
           {rebalanceStations.length} stations needing action
@@ -573,6 +591,7 @@ export default function App() {
             </table>
           </div>
         )}
+        </div>
       </main>
     </div>
   );
