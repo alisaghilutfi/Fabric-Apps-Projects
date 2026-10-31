@@ -5,7 +5,7 @@ Portfolio of Microsoft Fabric Apps built with the Rayfin SDK.
 | App | Workspace | Status | Live URL |
 |-----|-----------|--------|----------|
 | FabricApp_USGS_Earthquake | ws_USGS_Earthquake | 🟢 Live | https://daily-cave-2c1879b505-northeurope.webapp.fabricapps.net |
-| FabricApp_RTI_BicycleRentals | ws_RTI_BicycleRentals | 🟢 Live | https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net |
+| FabricApp_RTI_BicycleRentals | ws_RTI_BicycleRentals | 🟢 Live — interactive Leaflet map, status badges, 30s auto-poll, background gallery | https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net |
 | my-rayfin-app | ws_FabricApps | 🟡 Learning | https://lucid-iris-65e5e06ded-northeurope.webapp.fabricapps.net |
 
 ## Stack

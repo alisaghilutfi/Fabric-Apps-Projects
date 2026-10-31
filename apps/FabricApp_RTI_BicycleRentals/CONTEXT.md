@@ -38,29 +38,21 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
 
 ## Last Session -- 2026-10-31
 
-### What was done (Phase 1 + Phase 2, same session)
+### What was done
+- Eventstream `es_RTI_BicycleRentals` reactivated -- confirmed `rowsLast1h = 1,020`
+- Phase 1: status badges (Available/Low/Empty/Full), utilisation bars, 30s auto-poll, live indicator dot, LAST SNAPSHOT timestamp with stale colouring (`54bd392`)
+- Phase 2: "Full" label (was "Over"), background image gallery -- 20s crossfade, dot nav, frosted glass panels (`c873b29`)
+- Phase 3: background images replaced with verified race + bike-station mix (`14d06e1`)
+- Phase 4: Leaflet interactive map -- 120 colour-coded circle markers, bidirectional table<->map selection, hover tooltips, OSM tiles (`35c53a8`)
 
-**Phase 1 — Network Overview Polish**
-- Restarted Eventstream (was stale since 2026-10-22); confirmed `rowsLast1h = 1020`
-- `global.css`: status colour tokens + `live-dot` keyframe animation
-- New `src/lib/stationStatus.ts`: `getStationStatus()` + `statusConfig` (with explicit `bar` field)
-- `App.tsx`: `fetchSnapshot` / `startPolling` replace `loadOverview`; 30s `setInterval` via `intervalRef`
-- Live pulsing dot in AppHeader (green = live, grey = error); `showLiveDot`/`isError` props
-- LAST SNAPSHOT KPI card: wall-clock time from `lastUpdated` state; stale (>5min) turns amber
-- Station table rows: `border-l-4` status colour, status badge, utilisation bar (number + mini bar)
-- Detail + Rebalancing Queue screens updated to use `statusConfig` badges + row border colours
-- LOW STOCK % / UTILIZATION % KPI values colour-coded at thresholds
-- Committed: `54bd392`
+### Confirmed architecture
+- Poll query: `LatestStationSnapshot()` -- 120 rows, all columns
+- Status logic: `getStationStatus(No_Bikes, No_Empty_Docks, BikesToBeFilled)` in `stationStatus.ts`
+- `BikesToBeFilled` is `long`, `Action` is `string` ("NA" or numeric)
+- Map: Leaflet + OSM, `createCircleMarker()` in `mapMarkers.ts`, no API key needed
 
-**Phase 2 — Full badge rename, utilisation threshold, background imagery**
-- `stationStatus.ts`: `over` label renamed "Over" → "Full"
-- New `src/components/BackgroundGallery.tsx`: 6 Unsplash cycling images, 20s crossfade, dot nav, dark overlay
-- All 3 screens: `<BackgroundGallery>` mounted, `bg-background` removed from root div
-- All 3 screens: frosted-glass content panels (`bg-background/80 backdrop-blur-sm rounded-2xl`) wrapping content
-- Header: updated to frosted backdrop
-- UTILIZATION % threshold colouring was already in place from Phase 1
-- Committed: `c873b29`
-- Deployed: https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net
+### Eventstream note
+Deactivated after session -- reactivate by `Activate all` in `es_RTI_BicycleRentals`.
 
 ### Build notes (persistent gotchas)
 - `tsc` not on system PATH; use `node node_modules/typescript/bin/tsc -b <tsconfig>` for manual typecheck
@@ -71,6 +63,7 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
   node $tsc -b packages/data
   ```
 - Pre-existing typecheck errors: `data` (TS7016 `@rayfin-app/shared`), `Welcome.tsx` (lucide-react) -- unrelated; 3 scaffold failures in Root.spec.tsx remain
+- Frontend standalone typecheck (no project refs): `node ..\..\node_modules\typescript\bin\tsc --noEmit` from `packages/frontend`
 
 ### Confirmed schema -- TransformedData (Silver)
 | Column | Type | Notes |
@@ -95,33 +88,7 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
 - Type key `'over'`, display label `'Full'`; `'available'` | `'low'` | `'empty'` | `'over'` | `'unknown'`
 - pct < 0.2 = low; pct === 0 = empty; bikesToBeFilled < 0 = over/Full
 
-**Phase 3 — Background image replacement (2026-10-31, same session)**
-- Replaced all 6 BG_IMAGES with verified images: 3 cycling race shots (Unsplash) + 3 bike-sharing station shots (Pexels)
-- All images verified visually before deploy (WebFetch + Read tool as image)
-- Committed: `14d06e1`
-
-**Phase 4 — Interactive Leaflet map (2026-10-31, same session)**
-- Installed: `leaflet` + `@types/leaflet` (no API key, OpenStreetMap tiles)
-- New `src/lib/mapMarkers.ts`: `createCircleMarker()` — status-coloured `L.circleMarker`, radius 8/14 (normal/selected)
-- New `src/components/StationMap.tsx`: map init once (London 51.505/-0.09, zoom 12), markers rebuilt on stations/selectedId change, tooltip on hover, click fires `onSelectStation`
-- `App.tsx`: `selectedStationId` state; table now scrollable (max 320px), sticky thead; row `ref` callback auto-scrolls selected row into view; map panel 360px below table
-- Bidirectional sync: table row click → map pans + dot enlarges; map dot click → row highlights + scrolls into view
-- Vite icon-path fix: `delete L.Icon.Default.prototype._getIconUrl` + `mergeOptions` in StationMap.tsx
-- Committed: `35c53a8`, pushed, deployed
-
-### Build notes (persistent gotchas)
-- `tsc` not on system PATH; use `node node_modules/typescript/bin/tsc -b <tsconfig>` for manual typecheck
-- Before every `rayfin up`: rebuild shared with `--force` then data (otherwise `index.d.ts` may be missing)
-  ```powershell
-  $tsc = ".\node_modules\typescript\bin\tsc"
-  node $tsc -b packages/shared --force
-  node $tsc -b packages/data
-  ```
-- Pre-existing typecheck errors: `data` (TS7016 `@rayfin-app/shared`), `Welcome.tsx` (lucide-react) -- unrelated; 3 scaffold failures in Root.spec.tsx remain
-- Frontend standalone typecheck (no project refs): `node ..\..\node_modules\typescript\bin\tsc --noEmit` from `packages/frontend`
-
 ### Next session priorities
-1. Browser validation — map: confirm 120 dots render, colour-coding matches badges, bidirectional sync works, tooltip shows
-2. Optional: neighbourhood filter dropdown on Network Overview
-3. Optional: mark-resolved flow on Rebalancing Queue (set resolvedAt)
-4. Chart/sparkline: deferred -- revisit after Eventstream stability confirmed (AggregatedData MV only has 3 cols, not suitable)
+1. P4 sparkline chart -- network-wide bike count, last 2h, 15min bins from `TransformedData`
+2. KPI card visual polish
+3. Demo run-through and final checks before Nov 19
