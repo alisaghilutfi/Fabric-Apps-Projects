@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Bike, ParkingSquare, AlertTriangle, Percent, Clock, LayoutGrid } from 'lucide-react';
 import { getRayfinClient } from './lib/rayfin-client';
 import { useAppTheme } from './hooks/use-theme';
 import { cn } from './lib/utils';
 import { getStationStatus, statusConfig } from './lib/stationStatus';
 import { BackgroundGallery } from './components/BackgroundGallery';
 import { StationMap } from './components/StationMap';
+import { SparklineChart, type SparklineBin } from './components/SparklineChart';
 
 const BG_IMAGES = [
   // Race / action shots
@@ -91,6 +93,52 @@ const KPI_LABELS: Record<string, string> = {
   'Latest Snapshot Time': 'LAST SNAPSHOT',
 };
 
+// Icon + accent colour per KPI label
+const KPI_META: Record<string, { icon: React.ReactNode; accent: string }> = {
+  'Total Stations':       { icon: <LayoutGrid size={16} />, accent: '#6366f1' },
+  'AVG BIKES':            { icon: <Bike size={16} />,        accent: '#2563eb' },
+  'Avg Empty Docks':      { icon: <ParkingSquare size={16} />, accent: '#0891b2' },
+  'LOW STOCK %':          { icon: <AlertTriangle size={16} />, accent: '#d97706' },
+  'UTILIZATION %':        { icon: <Percent size={16} />,     accent: '#7c3aed' },
+  'LAST SNAPSHOT':        { icon: <Clock size={16} />,       accent: '#059669' },
+};
+
+function KpiCard({
+  label,
+  value,
+  accent,
+  icon,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  accent: string;
+  icon: React.ReactNode;
+  valueClass?: string;
+}) {
+  return (
+    <div
+      className="bg-card border border-border rounded-xl overflow-hidden"
+      style={{ borderTop: `3px solid ${accent}` }}
+    >
+      <div className="px-400 pt-300 pb-400">
+        <div className="flex items-center gap-150 mb-100">
+          <span style={{ color: accent }}>{icon}</span>
+          <span className="text-100 text-muted-foreground uppercase tracking-widest font-mono truncate">
+            {label}
+          </span>
+        </div>
+        <div
+          className={cn('text-500 font-bold', valueClass ?? 'text-foreground')}
+          style={{ fontFamily: 'var(--font-numeric)' }}
+        >
+          {value}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function fmt(value: string | number | null, name?: string): string {
   if (value === null || value === undefined) return '—';
   if (typeof value === 'number') {
@@ -142,7 +190,14 @@ export default function App() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [subDone, setSubDone] = useState<number | null>(null);
   const [selectedStationId, setSelectedStationId] = useState<number | null>(null);
+  const [sparklineData, setSparklineData] = useState<SparklineBin[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchSparkline = useCallback(async () => {
+    // Requires TransformedData table in sm_rti_bicyclerentals.
+    // Will be wired once the SM is updated to expose TransformedData.
+    setSparklineData([]);
+  }, []);
 
   const fetchSnapshot = useCallback(async () => {
     setError('');
@@ -200,8 +255,9 @@ export default function App() {
   const startPolling = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     fetchSnapshot();
-    intervalRef.current = setInterval(fetchSnapshot, 30_000);
-  }, [fetchSnapshot]);
+    fetchSparkline();
+    intervalRef.current = setInterval(() => { fetchSnapshot(); fetchSparkline(); }, 30_000);
+  }, [fetchSnapshot, fetchSparkline]);
 
   useEffect(() => {
     return () => {
@@ -300,45 +356,53 @@ export default function App() {
             <>
             {/* KPI Cards */}
             {kpis.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-300 mb-600">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-300 mb-500">
                 {kpis.map(k => {
                   const label = KPI_LABELS[k.name] ?? k.name.toUpperCase();
                   const isSnapshot = label === 'LAST SNAPSHOT';
                   const isLowStock = label === 'LOW STOCK %';
                   const isUtilization = label === 'UTILIZATION %';
+                  const meta = KPI_META[label] ?? KPI_META[k.name] ?? { icon: <LayoutGrid size={16} />, accent: '#6366f1' };
 
-                  let valueClass = 'text-500 font-bold text-foreground';
+                  let valueClass: string | undefined;
                   if (isLowStock && typeof k.value === 'number') {
-                    if (k.value > 0.15) valueClass = 'text-500 font-bold text-[var(--color-status-empty)]';
-                    else if (k.value > 0.05) valueClass = 'text-500 font-bold text-[var(--color-status-low)]';
+                    if (k.value > 0.15) valueClass = 'text-[var(--color-status-empty)]';
+                    else if (k.value > 0.05) valueClass = 'text-[var(--color-status-low)]';
                   }
                   if (isUtilization && typeof k.value === 'number') {
-                    if (k.value < 0.2) valueClass = 'text-500 font-bold text-[var(--color-status-empty)]';
-                    else if (k.value > 0.8) valueClass = 'text-500 font-bold text-[var(--color-status-low)]';
+                    if (k.value < 0.2) valueClass = 'text-[var(--color-status-empty)]';
+                    else if (k.value > 0.8) valueClass = 'text-[var(--color-status-low)]';
                   }
-
                   const snapshotStale = lastUpdated !== null && (new Date().getTime() - lastUpdated.getTime()) > 5 * 60 * 1000;
-                  const snapshotClass = isSnapshot
-                    ? (lastUpdated === null || snapshotStale)
-                      ? 'text-300 font-bold text-[var(--color-status-low)]'
-                      : 'text-300 font-bold text-foreground'
-                    : valueClass;
+                  if (isSnapshot && (lastUpdated === null || snapshotStale)) valueClass = 'text-[var(--color-status-low)]';
+
+                  const displayValue = isSnapshot
+                    ? (lastUpdated
+                        ? lastUpdated.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                        : '—')
+                    : fmt(k.value, k.name);
 
                   return (
-                    <div key={k.name} className="bg-card border border-border rounded-xl p-400">
-                      <div className="text-100 text-muted-foreground uppercase tracking-widest font-mono mb-100 truncate">
-                        {label}
-                      </div>
-                      <div className={snapshotClass} style={{ fontFamily: 'var(--font-numeric)' }}>
-                        {isSnapshot
-                          ? lastUpdated
-                            ? lastUpdated.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                            : '—'
-                          : fmt(k.value, k.name)}
-                      </div>
-                    </div>
+                    <KpiCard
+                      key={k.name}
+                      label={label}
+                      value={displayValue}
+                      accent={meta.accent}
+                      icon={meta.icon}
+                      valueClass={valueClass}
+                    />
                   );
                 })}
+              </div>
+            )}
+
+            {/* Sparkline — network bike count, last 2h in 15min bins */}
+            {sparklineData.length > 0 && (
+              <div className="bg-card border border-border rounded-xl p-400 mb-500">
+                <div className="text-100 text-muted-foreground uppercase tracking-widest font-mono mb-200">
+                  Network Bikes Available — Last 2h
+                </div>
+                <SparklineChart data={sparklineData} isDark={isDark} />
               </div>
             )}
 
