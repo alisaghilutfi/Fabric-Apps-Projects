@@ -36,38 +36,31 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
 - rpt_RTI_BicycleRentals: blocked on Trial capacity (manifest.json 404)
 - es_RTI_BicycleRentals Eventstream: may go inactive -- restart via Fabric portal if KQL counts stale
 
-## Last Session -- 2026-10-31 (Part 2)
+## Last Session -- 2026-10-31 (evening)
 
 ### What was done
-- Phase 5a: KPI card visual polish -- `KpiCard` component with top border accent, lucide icon per metric, semantic value colouring (`41221bf`)
-- Phase 5b: `SparklineChart` component -- recharts `AreaChart`, single series, custom tooltip, blue gradient fill (`41221bf`)
-- SM extended: added `Station History` DirectQuery table to `sm_RTI_BicycleRentals` via powerbi-modeling-mcp
-  - KQL partition: `TransformedData | where Timestamp > ago(2h) | summarize total_bikes = sum(No_Bikes) by bin(Timestamp, 15m)`
-  - Returns ~4-8 rows (15min bins, last 2h); columns: Timestamp, total_bikes
-- Phase 5c: `fetchSparkline` wired to `EVALUATE 'Station History'` DAX query, polled every 30s (`77c80e2`)
+- Phase 5a -- KPI card polish: new `KpiCard` component with lucide icons, top border accent colours, semantic value colouring (`41221bf`)
+- Phase 5b -- Sparkline chart: `SparklineChart.tsx` using recharts AreaChart, blue gradient, polls every 30s (`41221bf`)
+- Phase 5c -- Semantic model update: `Station History` DirectQuery table added to `sm_RTI_BicycleRentals` via powerbi-modeling-mcp; KQL partition pre-aggregates to 15min bins (`77c80e2`)
+- App is demo-ready for Nov 19
 
-### Next session priorities
-1. Demo run-through and final checks before Nov 19
-2. Optional: neighbourhood filter dropdown
-3. Optional: mark-resolved flow on Rebalancing Queue
+### Current state
+- All 5 phases complete and deployed
+- Live URL: https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net
+- Eventstream deactivated after session
+- F2 capacity paused
 
-## Last Session -- 2026-10-31 (Part 1)
+### Architecture confirmed
+- Poll query: `LatestStationSnapshot()` every 30s
+- Sparkline query: `EVALUATE 'Station History'` DAX against `sm_RTI_BicycleRentals` every 30s
+- Status logic: `getStationStatus()` in `stationStatus.ts`
+- Map: Leaflet + OSM, `createCircleMarker()` in `mapMarkers.ts`
+- Background gallery: 6 images (3 race, 3 bike-station), 20s crossfade
 
-### What was done
-- Eventstream `es_RTI_BicycleRentals` reactivated -- confirmed `rowsLast1h = 1,020`
-- Phase 1: status badges (Available/Low/Empty/Full), utilisation bars, 30s auto-poll, live indicator dot, LAST SNAPSHOT timestamp with stale colouring (`54bd392`)
-- Phase 2: "Full" label (was "Over"), background image gallery -- 20s crossfade, dot nav, frosted glass panels (`c873b29`)
-- Phase 3: background images replaced with verified race + bike-station mix (`14d06e1`)
-- Phase 4: Leaflet interactive map -- 120 colour-coded circle markers, bidirectional table<->map selection, hover tooltips, OSM tiles (`35c53a8`)
-
-### Confirmed architecture
-- Poll query: `LatestStationSnapshot()` -- 120 rows, all columns
-- Status logic: `getStationStatus(No_Bikes, No_Empty_Docks, BikesToBeFilled)` in `stationStatus.ts`
-- `BikesToBeFilled` is `long`, `Action` is `string` ("NA" or numeric)
-- Map: Leaflet + OSM, `createCircleMarker()` in `mapMarkers.ts`, no API key needed
-
-### Eventstream note
-Deactivated after session -- reactivate by `Activate all` in `es_RTI_BicycleRentals`.
+### Next development (post-demo)
+- Mark-resolved flow on Rebalancing Queue
+- Neighbourhood filter dropdown on Network Overview
+- `rpt_RTI_BicycleRentals` report (blocked on Trial capacity -- manifest 404)
 
 ### Build notes (persistent gotchas)
 - `tsc` not on system PATH; use `node node_modules/typescript/bin/tsc -b <tsconfig>` for manual typecheck
@@ -102,8 +95,3 @@ Deactivated after session -- reactivate by `Activate all` in `es_RTI_BicycleRent
 ### Status badge logic (implemented in stationStatus.ts)
 - Type key `'over'`, display label `'Full'`; `'available'` | `'low'` | `'empty'` | `'over'` | `'unknown'`
 - pct < 0.2 = low; pct === 0 = empty; bikesToBeFilled < 0 = over/Full
-
-### Next session priorities
-1. P4 sparkline chart -- network-wide bike count, last 2h, 15min bins from `TransformedData`
-2. KPI card visual polish
-3. Demo run-through and final checks before Nov 19
