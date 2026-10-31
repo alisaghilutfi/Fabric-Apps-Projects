@@ -36,7 +36,22 @@ Fields: stationId (int), street, neighbourhood, action, flaggedAt, resolvedAt (o
 - rpt_RTI_BicycleRentals: blocked on Trial capacity (manifest.json 404)
 - es_RTI_BicycleRentals Eventstream: may go inactive -- restart via Fabric portal if KQL counts stale
 
-## Last Session -- 2026-10-31
+## Last Session -- 2026-10-31 (Part 2)
+
+### What was done
+- Phase 5a: KPI card visual polish -- `KpiCard` component with top border accent, lucide icon per metric, semantic value colouring (`41221bf`)
+- Phase 5b: `SparklineChart` component -- recharts `AreaChart`, single series, custom tooltip, blue gradient fill (`41221bf`)
+- SM extended: added `Station History` DirectQuery table to `sm_RTI_BicycleRentals` via powerbi-modeling-mcp
+  - KQL partition: `TransformedData | where Timestamp > ago(2h) | summarize total_bikes = sum(No_Bikes) by bin(Timestamp, 15m)`
+  - Returns ~4-8 rows (15min bins, last 2h); columns: Timestamp, total_bikes
+- Phase 5c: `fetchSparkline` wired to `EVALUATE 'Station History'` DAX query, polled every 30s (`77c80e2`)
+
+### Next session priorities
+1. Demo run-through and final checks before Nov 19
+2. Optional: neighbourhood filter dropdown
+3. Optional: mark-resolved flow on Rebalancing Queue
+
+## Last Session -- 2026-10-31 (Part 1)
 
 ### What was done
 - Eventstream `es_RTI_BicycleRentals` reactivated -- confirmed `rowsLast1h = 1,020`
