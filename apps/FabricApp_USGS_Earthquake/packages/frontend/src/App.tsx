@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Activity, TrendingUp, BarChart2, Zap, AlertTriangle } from 'lucide-react';
 import { getRayfinClient } from './lib/rayfin-client';
 import { useAppTheme } from './hooks/use-theme';
 import { cn } from './lib/utils';
+import { EarthquakeMap, type EarthquakePoint } from './components/EarthquakeMap';
 
 type Screen = 'search' | 'results' | 'subscribe';
 
@@ -14,6 +15,8 @@ interface EarthquakeRow {
   'Significance Class': string;
   'Event Time': string;
   'Country Code': string;
+  Latitude: number;
+  Longitude: number;
 }
 
 interface KpiRow { name: string; value: string | number; }
@@ -114,30 +117,62 @@ function KpiCard({
   );
 }
 
-function SeismographBg() {
-  const points = Array.from({ length: 120 }, (_, i) => {
-    const x = (i / 119) * 800;
-    const noise = Math.sin(i * 0.4) * 8 + Math.sin(i * 1.1) * 4 +
-      Math.sin(i * 2.3) * 2 + (i > 50 && i < 70 ? Math.sin((i - 50) * 0.7) * 28 : 0);
-    return `${x},${100 + noise}`;
-  }).join(' ');
+function SeismographAnimBg() {
+  const makeTrace = (seed: number, offsetY: number, big: boolean) =>
+    Array.from({ length: 160 }, (_, i) => {
+      const x = (i / 159) * 800;
+      const quake = big && i > 70 && i < 100
+        ? Math.sin((i - 70) * 0.55) * 32 * Math.exp(-0.04 * (i - 70))
+        : 0;
+      const noise =
+        Math.sin(i * 0.35 + seed) * 5 +
+        Math.sin(i * 0.9 + seed * 2) * 2.5 +
+        Math.sin(i * 2.1 + seed) * 1 +
+        quake;
+      return `${x.toFixed(1)},${(offsetY + noise).toFixed(1)}`;
+    }).join(' ');
+
+  const traces = [
+    { y: 50,  big: false, seed: 1.1, opacity: 0.55, delay: '0s'    },
+    { y: 110, big: true,  seed: 2.7, opacity: 0.9,  delay: '-1.5s' },
+    { y: 170, big: false, seed: 0.4, opacity: 0.45, delay: '-3s'   },
+  ];
 
   return (
-    <svg
-      viewBox="0 0 800 200"
-      preserveAspectRatio="xMidYMid slice"
-      className="absolute inset-0 w-full h-full opacity-[0.07]"
-      aria-hidden="true"
-    >
-      <polyline
-        points={points}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <>
+      {/* Dark overlay so the form is always readable */}
+      <div className="absolute inset-0 bg-black/55" aria-hidden="true" />
+      <svg
+        viewBox="0 0 800 220"
+        preserveAspectRatio="xMidYMid slice"
+        className="absolute inset-0 w-full h-full"
+        aria-hidden="true"
+        style={{ background: 'linear-gradient(135deg,#0a1628 0%,#0f2540 50%,#0a1628 100%)' }}
+      >
+        <style>{`
+          @keyframes seis-scroll {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+          }
+        `}</style>
+        {traces.map((t, idx) => (
+          <g key={idx} style={{
+            animation: `seis-scroll 8s linear infinite`,
+            animationDelay: t.delay,
+          }}>
+            <polyline
+              points={[makeTrace(t.seed, t.y, t.big), makeTrace(t.seed + 0.1, t.y, t.big)].join(' 800,')}
+              fill="none"
+              stroke="#22d3ee"
+              strokeWidth={t.big ? '1.4' : '0.9'}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={t.opacity}
+            />
+          </g>
+        ))}
+      </svg>
+    </>
   );
 }
 
@@ -154,6 +189,27 @@ export default function App() {
   const [error, setError] = useState('');
   const [subDone, setSubDone] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  const mapPoints: EarthquakePoint[] = earthquakes
+    .filter(eq => eq.Latitude != null && eq.Longitude != null)
+    .map(eq => ({
+      id:       String(eq.ID ?? `${eq['Event Time']}-${eq.Magnitude}`),
+      lat:      Number(eq.Latitude),
+      lng:      Number(eq.Longitude),
+      magnitude: Number(eq.Magnitude ?? 0),
+      place:    String(eq['Place Description'] ?? ''),
+      time:     String(eq['Event Time'] ?? ''),
+      sigClass: String(eq['Significance Class'] ?? ''),
+    }));
+
+  function handleMapSelect(id: string) {
+    setHighlightId(id);
+    // Scroll the highlighted row into view
+    const row = tableRef.current?.querySelector(`[data-eq-id="${id}"]`);
+    if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
 
   const filtered = COUNTRIES.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -254,15 +310,15 @@ export default function App() {
 
   // Screen: Search
   if (screen === 'search') return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen text-foreground flex flex-col">
       <Header />
       <main className="flex-1 flex flex-col items-center justify-center px-400 py-800 relative overflow-hidden">
-        <SeismographBg />
+        <SeismographAnimBg />
         <div className="relative z-10 w-full max-w-md">
-          <h1 className="text-hero-700 font-bold leading-hero-700 text-foreground mb-200">
+          <h1 className="text-hero-700 font-bold leading-hero-700 text-white mb-200">
             Recent Seismic Activity
           </h1>
-          <p className="text-300 text-muted-foreground mb-600 leading-300">
+          <p className="text-300 text-white/70 mb-600 leading-300">
             Search by country to explore earthquake data and subscribe to alerts.
           </p>
 
@@ -291,7 +347,7 @@ export default function App() {
           </div>
 
           {error && (
-            <p className="text-destructive text-300 mb-300">{error}</p>
+            <p className="text-red-300 text-300 mb-300">{error}</p>
           )}
 
           <button
@@ -344,47 +400,70 @@ export default function App() {
           </div>
         )}
 
-        {/* Earthquake table */}
+        {/* Split layout: table + map */}
         {earthquakes.length === 0 ? (
-          <div className="bg-card border border-border rounded-xl p-800 text-center">
+          <div className="bg-card border border-border rounded-xl p-800 text-center mb-600">
             <p className="text-muted-foreground text-300">No earthquakes recorded in the last 30 days for {countryName || countryCode}.</p>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-xl overflow-hidden mb-600">
-            <table className="w-full text-300">
-              <thead>
-                <tr className="bg-primary text-primary-foreground">
-                  <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Time</th>
-                  <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Location</th>
-                  <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider">Mag</th>
-                  <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Class</th>
-                </tr>
-              </thead>
-              <tbody>
-                {earthquakes.map((eq, i) => (
-                  <tr
-                    key={eq.ID ?? i}
-                    className={cn(
-                      'border-t border-border transition-colors hover:bg-muted/50',
-                      i % 2 === 0 ? 'bg-card' : 'bg-background'
-                    )}
-                  >
-                    <td className="px-400 py-300 text-muted-foreground font-mono text-200 whitespace-nowrap">
-                      {eq['Event Time'] ? new Date(String(eq['Event Time'])).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                    </td>
-                    <td className="px-400 py-300 text-foreground">{eq['Place Description'] ?? '—'}</td>
-                    <td className="px-400 py-300 text-right font-bold font-[--font-numeric] text-primary">
-                      {eq.Magnitude != null ? Number(eq.Magnitude).toFixed(1) : '—'}
-                    </td>
-                    <td className="px-400 py-300">
-                      <span className={cn('text-100 font-semibold px-300 py-100 rounded-full uppercase tracking-widest', sigBadge(eq['Significance Class']))}>
-                        {eq['Significance Class'] ?? '—'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex flex-col gap-400 mb-600">
+            {/* Table — top half, scrollable */}
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="overflow-y-auto" style={{ maxHeight: '300px' }} ref={tableRef}>
+                <table className="w-full text-300">
+                  <thead className="sticky top-0 z-10">
+                    <tr className="bg-primary text-primary-foreground">
+                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Time</th>
+                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Location</th>
+                      <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider">Mag</th>
+                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider hidden sm:table-cell">Class</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {earthquakes.map((eq, i) => {
+                      const eqId = String(eq.ID ?? `${eq['Event Time']}-${eq.Magnitude}`);
+                      const isHighlighted = eqId === highlightId;
+                      return (
+                        <tr
+                          key={eqId}
+                          data-eq-id={eqId}
+                          onClick={() => setHighlightId(eqId)}
+                          className={cn(
+                            'border-t border-border transition-colors cursor-pointer',
+                            isHighlighted
+                              ? 'bg-primary/15 border-l-4 border-l-primary'
+                              : i % 2 === 0 ? 'bg-card hover:bg-muted/50' : 'bg-background hover:bg-muted/50'
+                          )}
+                        >
+                          <td className="px-400 py-300 text-muted-foreground font-mono text-200 whitespace-nowrap">
+                            {eq['Event Time'] ? new Date(String(eq['Event Time'])).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                          </td>
+                          <td className="px-400 py-300 text-foreground">{eq['Place Description'] ?? '—'}</td>
+                          <td className="px-400 py-300 text-right font-bold text-primary" style={{ fontFamily: 'var(--font-numeric)' }}>
+                            {eq.Magnitude != null ? Number(eq.Magnitude).toFixed(1) : '—'}
+                          </td>
+                          <td className="px-400 py-300 hidden sm:table-cell">
+                            <span className={cn('text-100 font-semibold px-300 py-100 rounded-full uppercase tracking-widest', sigBadge(eq['Significance Class']))}>
+                              {eq['Significance Class'] ?? '—'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Map — bottom half */}
+            <div className="bg-card border border-border rounded-xl overflow-hidden" style={{ height: '340px' }}>
+              <EarthquakeMap
+                points={mapPoints}
+                isDark={isDark}
+                highlightId={highlightId}
+                onSelectId={handleMapSelect}
+              />
+            </div>
           </div>
         )}
 

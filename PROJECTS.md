@@ -2,7 +2,7 @@
 
 | App | Workspace | Status | Live URL | Rayfin Item ID |
 |-----|-----------|--------|----------|----------------|
-| FabricApp_USGS_Earthquake | ws_USGS_Earthquake | 🟢 Live — All 3 screens complete. Search (country autocomplete, seismograph bg), Results (KPI cards with icons/accents, TOPN-50 event table), Subscribe (AlertSubscription write). Dead lh_usgs_earthquake connector removed. | https://daily-cave-2c1879b505-northeurope.webapp.fabricapps.net | 22fd172f-f5d6-4765-a353-86e42f64782f |
+| FabricApp_USGS_Earthquake | ws_USGS_Earthquake | 🟢 Live — All 3 screens complete. Search (animated seismograph bg with dark overlay), Results (KPI cards, scrollable table + Leaflet map with magnitude-coloured markers, light/dark tile swap, table-map bidirectional highlight), Subscribe (AlertSubscription write). | https://daily-cave-2c1879b505-northeurope.webapp.fabricapps.net | 22fd172f-f5d6-4765-a353-86e42f64782f |
 | FabricApp_RTI_BicycleRentals | ws_RTI_BicycleRentals | 🟢 Live — All 5 phases complete. KPI cards, sparkline, map, badges, live poll deployed. Eventstream deactivated. Post-demo: mark-resolved flow, neighbourhood filter, rpt_ report. Auth: external Entra accounts supported; workspace Viewer role required for DAX connector. | https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net | 3d942f93-b1f3-4e01-abf8-e664b0ff969b |
 | my-rayfin-app | ws_FabricApps | 🟢 Live | https://lucid-iris-65e5e06ded-northeurope.webapp.fabricapps.net | af9bbcd3-57c2-469c-a513-18c5ce89f854 |
 
