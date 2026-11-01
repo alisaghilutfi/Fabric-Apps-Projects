@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Activity, TrendingUp, BarChart2, Zap, AlertTriangle } from 'lucide-react';
 import { getRayfinClient } from './lib/rayfin-client';
 import { useAppTheme } from './hooks/use-theme';
 import { cn } from './lib/utils';
@@ -72,6 +73,45 @@ function sigBadge(cls: string) {
   if (cls === 'High') return 'bg-destructive text-destructive-foreground';
   if (cls === 'Moderate') return 'bg-accent text-accent-foreground';
   return 'bg-muted text-muted-foreground';
+}
+
+const KPI_META: Record<string, { icon: React.ReactNode; accent: string }> = {
+  'Total Earthquakes': { icon: <Activity size={16} />,      accent: '#6366f1' },
+  'Avg Magnitude':     { icon: <BarChart2 size={16} />,     accent: '#2563eb' },
+  'Max Magnitude':     { icon: <TrendingUp size={16} />,    accent: '#dc2626' },
+  'Max Significance':  { icon: <Zap size={16} />,           accent: '#d97706' },
+  '% High Significance': { icon: <AlertTriangle size={16} />, accent: '#7c3aed' },
+};
+
+function KpiCard({
+  label,
+  value,
+  accent,
+  icon,
+}: {
+  label: string;
+  value: string;
+  accent: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div
+      className="bg-card border border-border rounded-xl overflow-hidden"
+      style={{ borderTop: `3px solid ${accent}` }}
+    >
+      <div className="px-400 pt-300 pb-400">
+        <div className="flex items-center gap-150 mb-100">
+          <span style={{ color: accent }}>{icon}</span>
+          <span className="text-100 text-muted-foreground uppercase tracking-widest font-mono truncate">
+            {label}
+          </span>
+        </div>
+        <div className="text-500 font-bold text-foreground" style={{ fontFamily: 'var(--font-numeric)' }}>
+          {value}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function SeismographBg() {
@@ -288,16 +328,19 @@ export default function App() {
         {/* KPI Cards */}
         {kpis.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-300 mb-600">
-            {kpis.map(k => (
-              <div key={k.name} className="bg-card border border-border rounded-xl p-400">
-                <div className="text-100 text-muted-foreground uppercase tracking-widest font-mono mb-100">
-                  {k.name.replace(/^\[|\]$/g, '').trim()}
-                </div>
-                <div className="text-500 font-bold text-foreground" style={{ fontFamily: 'var(--font-numeric)' }}>
-                  {formatKpi(k.name, k.value)}
-                </div>
-              </div>
-            ))}
+            {kpis.map(k => {
+              const label = k.name.replace(/^\[|\]$/g, '').trim();
+              const meta = KPI_META[label] ?? { icon: <Activity size={16} />, accent: '#6366f1' };
+              return (
+                <KpiCard
+                  key={k.name}
+                  label={label}
+                  value={formatKpi(k.name, k.value)}
+                  accent={meta.accent}
+                  icon={meta.icon}
+                />
+              );
+            })}
           </div>
         )}
 
