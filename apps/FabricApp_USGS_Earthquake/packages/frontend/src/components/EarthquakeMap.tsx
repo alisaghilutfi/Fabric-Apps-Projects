@@ -10,10 +10,8 @@ import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)['_getIconUrl'];
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
-const TILE_LIGHT = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-const ATTR_OSM   = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-const ATTR_CARTO = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const TILE_URL  = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 export interface EarthquakePoint {
   id: string;
@@ -27,7 +25,6 @@ export interface EarthquakePoint {
 
 interface EarthquakeMapProps {
   points: EarthquakePoint[];
-  isDark: boolean;
   highlightId?: string | null;
   onSelectId?: (id: string) => void;
 }
@@ -42,10 +39,9 @@ function magRadius(mag: number): number {
   return Math.max(4, mag * 2.5);
 }
 
-export function EarthquakeMap({ points, isDark, highlightId, onSelectId }: EarthquakeMapProps) {
+export function EarthquakeMap({ points, highlightId, onSelectId }: EarthquakeMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<L.Map | null>(null);
-  const tileRef      = useRef<L.TileLayer | null>(null);
   const markersRef   = useRef<Map<string, L.CircleMarker>>(new Map());
 
   // Init map once
@@ -59,33 +55,15 @@ export function EarthquakeMap({ points, isDark, highlightId, onSelectId }: Earth
       attributionControl: true,
     });
 
-    tileRef.current = L.tileLayer(isDark ? TILE_DARK : TILE_LIGHT, {
-      attribution: isDark ? ATTR_CARTO : ATTR_OSM,
-      maxZoom: 18,
-    }).addTo(mapRef.current);
+    L.tileLayer(TILE_URL, { attribution: TILE_ATTR, maxZoom: 18 }).addTo(mapRef.current);
 
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;
-      tileRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Swap tile layer on theme change
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    if (tileRef.current) {
-      map.removeLayer(tileRef.current);
-    }
-    tileRef.current = L.tileLayer(isDark ? TILE_DARK : TILE_LIGHT, {
-      attribution: isDark ? ATTR_CARTO : ATTR_OSM,
-      maxZoom: 18,
-    }).addTo(map);
-  }, [isDark]);
-
-  // Rebuild markers when points change
+  // Rebuild markers when points or highlight change
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -118,7 +96,6 @@ export function EarthquakeMap({ points, isDark, highlightId, onSelectId }: Earth
       markersRef.current.set(p.id, marker);
     });
 
-    // Fit map to all markers
     if (validPoints.length > 0) {
       const bounds = L.latLngBounds(validPoints.map(p => [p.lat, p.lng]));
       map.fitBounds(bounds, { padding: [32, 32], maxZoom: 8 });

@@ -503,11 +503,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Map — always dark tiles to stay readable over photo bg */}
+              {/* Map */}
               <div className="border border-border rounded-xl overflow-hidden" style={{ height: '340px' }}>
                 <EarthquakeMap
                   points={mapPoints}
-                  isDark={true}
                   highlightId={highlightId}
                   onSelectId={handleMapSelect}
                 />

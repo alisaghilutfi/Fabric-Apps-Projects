@@ -43,8 +43,7 @@ traces on dark gradient), dark overlay, white/white-70 text on bg.
 
 **Zone 2 photo slideshow bg:** 4 images cycle every 5 s via pure CSS `@keyframes slide-fade` with
 staggered `animation-delay` (0s, 5s, 10s, 15s); no JS timer. bg-black/60 overlay for readability.
-Table: bg-card/90 + backdrop-blur-sm. Map: always CartoDB Dark Matter tiles (isDark=true hard-coded)
-— OSM light tiles look washed-out over the photo bg.
+Table: bg-card/90 + backdrop-blur-sm. Map: OSM tiles only (CartoDB removed).
 Files: `src/assets/earthquakes/` (sf1906.jpg, sf1906train.jpg, kobe1995.jpg, aegean2020.jpg)
 
 **Subscribe button** at bottom of Zone 2.
@@ -68,14 +67,13 @@ Policy: authenticated user owns their own record (claims.sub.eq(item.userId))
 - Subscribe screen: not yet tested end-to-end with a real user session (entity write)
 - Root.spec.tsx: no known failures at last deploy
 
-## Last Session -- 2026-11-01 (session 4)
+## Last Session -- 2026-11-01 (session 5)
 
 ### What was done
-- Removed Zone 3 photo strip from Results screen
-- Replaced Zone 2 solid background with `SlideshowBg`: pure CSS crossfade cycling through
-  all 4 earthquake photos every 5 s (`@keyframes slide-fade`, staggered `animation-delay`)
-- bg-black/60 overlay on slideshow for table/map readability
-- Table: bg-card/90 + backdrop-blur-sm; map: CartoDB Dark Matter always (isDark hard-coded true)
+- Replaced CartoDB Dark Matter map tiles with OSM tiles throughout EarthquakeMap.tsx
+- Removed `isDark` prop from `EarthquakeMap` component and interface; removed tile-swap useEffect
+- Single tile source: `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`
+- Updated App.tsx call site to drop `isDark` prop
 - Frontend TS typecheck: zero errors; Vite build: clean
 - Deployed via `npx rayfin up`
 
