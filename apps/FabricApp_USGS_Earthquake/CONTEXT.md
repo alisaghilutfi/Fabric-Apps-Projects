@@ -21,48 +21,64 @@ lh_usgs_earthquake connector removed (TDS port 1433 blocked; folder deleted 2026
 - 17 DAX measures across Magnitude / Significance / Time / Time Intelligence / Volume folders
 
 ## App Design -- 3 Screens (all built and deployed)
-- Search: country autocomplete (75 countries), animated seismograph SVG bg (CSS keyframe scroll,
-  3 traces, cyan on dark gradient), dark overlay so form is readable; white/white-70 text on bg
-- Results: KPI cards (Total Earthquakes, Avg/Max Magnitude, Max Significance, % High Significance)
-  via EVALUATE ROW(...); split layout: scrollable table (top, maxH 300px) + Leaflet map (bottom,
-  340px); table rows highlight on click; map markers coloured by magnitude (green/orange/red);
-  clicking a map marker highlights+scrolls the corresponding table row; dark mode swaps to
-  CartoDB Dark Matter tile layer; Back button
-- Subscribe: AlertSubscription entity write (countryCode + minMagnitude slider), success/error states
+
+### Search
+Country autocomplete (75 countries), animated seismograph SVG bg (CSS keyframe scroll, 3 cyan
+traces on dark gradient), dark overlay, white/white-70 text on bg.
+
+### Results -- 3-zone layout
+**Zone 1 — Animated header** (full-width, relative overflow-hidden):
+- SeismographAnimBg (same component as Search) fills the zone
+- bg-black/55 overlay built into SeismographAnimBg
+- Title (country name) + subtitle (last-30-days count) in white/white-60
+- 5 KPI cards in a 2-col/5-col grid below the title (bg-card floats on dark bg)
+- All via EVALUATE ROW(...) on sm_usgs_earthquake
+
+**Zone 2 — Data (solid bg-background surface)**:
+- Scrollable event table (sticky header, maxH 300px): Time / Location / Mag / Class
+  - Rows clickable, highlighted row gets bg-primary/15 + left border
+- Leaflet earthquake map (340px): CircleMarker coloured by magnitude band (green/orange/red),
+  fitBounds to result set, OSM (light) / CartoDB Dark Matter (dark) tile swap
+- Bidirectional highlight: clicking table row or map marker syncs both
+
+**Zone 3 — Photo strip** (between map and Subscribe button):
+- 4 public domain earthquake photos from Wikimedia Commons (bundled as static assets)
+- 2-col/4-col responsive grid, 200px fixed height, object-cover, rounded-xl
+- Bottom-left caption overlay with gradient fade (bg-black/40 gradient)
+- Photos: SF 1906 street damage, SF 1906 railway wreck, Kobe 1995 port memorial, Aegean 2020 rubble
+- Files: `src/assets/earthquakes/` (sf1906.jpg, sf1906train.jpg, kobe1995.jpg, aegean2020.jpg)
+
+**Subscribe button** at bottom.
+
+### Subscribe
+AlertSubscription entity write (countryCode + minMagnitude slider), success/error states.
 
 ## AlertSubscription Entity (packages/data/src/Subscription.ts)
 Fields: id (uuid), countryCode (text 2), minMagnitude (decimal 1.0-9.9), createdAt (date), userId (text)
 Policy: authenticated user owns their own record (claims.sub.eq(item.userId))
 
 ## Key Components
-- `packages/frontend/src/components/EarthquakeMap.tsx` -- Leaflet map, magnitude-coloured CircleMarker,
-  light (OSM) / dark (CartoDB) tile swap, fitBounds to event set, tooltip on hover, bidirectional
-  highlight with parent via highlightId + onSelectId props
-- Leaflet installed: `leaflet@1.9.4`, `@types/leaflet@1.9.22` in frontend package.json
+- `packages/frontend/src/components/EarthquakeMap.tsx` -- Leaflet map
+- `packages/frontend/src/assets/earthquakes/` -- 4 bundled earthquake photos
+- Leaflet: `leaflet@1.9.4`, `@types/leaflet@1.9.22` in frontend package.json
 
 ## Open Items
 - Pipeline schedule: pl_USGS_Earthquake runs on demand only; Gold table grows stale between runs
-- Earthquake events table may not always have Latitude/Longitude -- EarthquakeMap filters
-  `p.lat != null && p.lng != null` so it renders safely with a partial point set
+- Earthquake events may not always return Latitude/Longitude columns (model-dependent);
+  EarthquakeMap filters null lat/lng safely
+- Subscribe screen: not yet tested end-to-end with a real user session (entity write)
 - Root.spec.tsx: no known failures at last deploy
 
-## Last Session -- 2026-11-01 (session 2)
+## Last Session -- 2026-11-01 (session 3)
 
 ### What was done
-- Added `leaflet@1.9.4` + `@types/leaflet@1.9.22` to `packages/frontend/package.json`
-- Created `packages/frontend/src/components/EarthquakeMap.tsx`:
-  - Leaflet map with OSM (light) / CartoDB Dark Matter (dark) tile swap via `isDark` prop
-  - CircleMarker per earthquake; colour = magnitude band (green <4, orange 4-6, red >=6)
-  - `fitBounds` auto-zooms to the result set
-  - Tooltip: magnitude + place description
-  - Bidirectional sync: clicking marker calls `onSelectId`; `highlightId` enlarges + outlines marker
-- Replaced `SeismographBg` (static SVG) with `SeismographAnimBg`:
-  - CSS `seis-scroll` keyframe scrolls 3 sine-wave traces across the screen
-  - Gradient dark background (`#0a1628 -> #0f2540`), cyan traces at varying opacities
-  - Built-in `bg-black/55` overlay div -- no separate overlay needed at the screen level
-- Results screen restructured: scrollable table (sticky header, 300px max-height) + map (340px) in a
-  flex column; table rows clickable, `highlightId` state wired to both table and map
-- Frontend TS typecheck: zero errors; Vite build: clean (chunk size warning only)
+- Downloaded 4 public domain earthquake photos from Wikimedia Commons into
+  `packages/frontend/src/assets/earthquakes/` (sf1906.jpg, sf1906train.jpg, kobe1995.jpg, aegean2020.jpg)
+- Added Zone 1 animated header to Results screen: wrapped title + KPI cards in a relative div
+  with `SeismographAnimBg` (reuses Search screen component); white/white-60 text on dark bg
+- Added Zone 3 photo strip below the map: 4-photo responsive grid (2-col mobile / 4-col desktop),
+  200px fixed height, object-cover, rounded-xl, bottom-left caption with gradient overlay
+- Frontend TS typecheck: zero errors; Vite build: clean (photos bundled as static assets)
 - Deployed via `npx rayfin up`
 
 ### Current state
@@ -73,8 +89,8 @@ Policy: authenticated user owns their own record (claims.sub.eq(item.userId))
 ### Build notes (persistent gotchas)
 - `tsc` not on PATH; after fresh `npm install` use `.\node_modules\typescript\bin\tsc`
 - Build order: `node $tsc -b packages/shared --force` then `node $tsc -b packages/data --force`
-  (remove .tsbuildinfo files if dist/index.js not emitting -- composite incremental skips clean builds)
+  (remove .tsbuildinfo if dist/index.js not emitting)
 - Frontend standalone typecheck: `node ..\..\node_modules\typescript\bin\tsc --noEmit` from `packages/frontend`
-- `npm run build` at app root runs data then frontend; uses PATH tsc (requires fresh npm install to resolve)
-- Leaflet marker icon fix required (same as RTI): delete `_getIconUrl` and mergeOptions with
-  `iconUrl`/`iconRetinaUrl`/`shadowUrl` -- already done in `EarthquakeMap.tsx`
+- Leaflet marker icon fix in `EarthquakeMap.tsx`: delete `_getIconUrl` + mergeOptions
+- Wikimedia Commons direct file downloads: use curl with browser User-Agent + Referer header;
+  thumbnail URLs (thumb/ paths) often 404 -- use the canonical file URL from the wiki page instead

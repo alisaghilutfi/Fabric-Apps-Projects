@@ -4,6 +4,17 @@ import { getRayfinClient } from './lib/rayfin-client';
 import { useAppTheme } from './hooks/use-theme';
 import { cn } from './lib/utils';
 import { EarthquakeMap, type EarthquakePoint } from './components/EarthquakeMap';
+import imgSf1906 from './assets/earthquakes/sf1906.jpg';
+import imgSf1906Train from './assets/earthquakes/sf1906train.jpg';
+import imgKobe1995 from './assets/earthquakes/kobe1995.jpg';
+import imgAegean2020 from './assets/earthquakes/aegean2020.jpg';
+
+const PHOTO_STRIP = [
+  { src: imgSf1906,      caption: 'San Francisco, 1906' },
+  { src: imgSf1906Train, caption: 'SF Railway, 1906'    },
+  { src: imgKobe1995,    caption: 'Kobe, 1995'          },
+  { src: imgAegean2020,  caption: 'Aegean Sea, 2020'    },
+];
 
 type Screen = 'search' | 'results' | 'subscribe';
 
@@ -373,41 +384,46 @@ export default function App() {
   if (screen === 'results') return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Header back={() => setScreen('search')} backLabel="Search" />
+
+      {/* Zone 1 — Animated header: title + KPI cards */}
+      <div className="relative overflow-hidden">
+        <SeismographAnimBg />
+        <div className="relative z-10 px-600 py-500 max-w-4xl mx-auto w-full">
+          <h2 className="text-hero-700 font-bold leading-hero-700 text-white mb-100">
+            {countryName || countryCode}
+          </h2>
+          <p className="text-200 text-white/60 mb-500 uppercase tracking-widest font-mono">
+            Last 30 days · {earthquakes.length === 50 ? '50+' : earthquakes.length} events
+          </p>
+          {kpis.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-300">
+              {kpis.map(k => {
+                const label = k.name.replace(/^\[|\]$/g, '').trim();
+                const meta = KPI_META[label] ?? { icon: <Activity size={16} />, accent: '#6366f1' };
+                return (
+                  <KpiCard
+                    key={k.name}
+                    label={label}
+                    value={formatKpi(k.name, k.value)}
+                    accent={meta.accent}
+                    icon={meta.icon}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Zone 2 — Data: table + map on solid surface */}
       <main className="flex-1 px-600 py-500 max-w-4xl mx-auto w-full">
-        <h2 className="text-hero-700 font-bold leading-hero-700 mb-100">
-          {countryName || countryCode}
-        </h2>
-        <p className="text-200 text-muted-foreground mb-500 uppercase tracking-widest font-mono">
-          Last 30 days · {earthquakes.length} of {earthquakes.length === 50 ? '50+' : earthquakes.length} events shown
-        </p>
-
-        {/* KPI Cards */}
-        {kpis.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-300 mb-600">
-            {kpis.map(k => {
-              const label = k.name.replace(/^\[|\]$/g, '').trim();
-              const meta = KPI_META[label] ?? { icon: <Activity size={16} />, accent: '#6366f1' };
-              return (
-                <KpiCard
-                  key={k.name}
-                  label={label}
-                  value={formatKpi(k.name, k.value)}
-                  accent={meta.accent}
-                  icon={meta.icon}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {/* Split layout: table + map */}
         {earthquakes.length === 0 ? (
           <div className="bg-card border border-border rounded-xl p-800 text-center mb-600">
             <p className="text-muted-foreground text-300">No earthquakes recorded in the last 30 days for {countryName || countryCode}.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-400 mb-600">
-            {/* Table — top half, scrollable */}
+            {/* Table — scrollable */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="overflow-y-auto" style={{ maxHeight: '300px' }} ref={tableRef}>
                 <table className="w-full text-300">
@@ -455,7 +471,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Map — bottom half */}
+            {/* Map */}
             <div className="bg-card border border-border rounded-xl overflow-hidden" style={{ height: '340px' }}>
               <EarthquakeMap
                 points={mapPoints}
@@ -466,6 +482,26 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* Zone 3 — Photo strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-300 mb-600">
+          {PHOTO_STRIP.map(p => (
+            <div key={p.caption} className="relative rounded-xl overflow-hidden" style={{ height: '200px' }}>
+              <img
+                src={p.src}
+                alt={p.caption}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div
+                className="absolute bottom-0 left-0 right-0 px-300 py-200"
+                style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)' }}
+              >
+                <span className="text-200 text-white font-medium">{p.caption}</span>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <button
           onClick={() => { setSubDone(false); setScreen('subscribe'); }}
