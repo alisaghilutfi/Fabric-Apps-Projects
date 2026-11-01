@@ -4,7 +4,7 @@ Portfolio of Microsoft Fabric Apps built with the Rayfin SDK.
 
 | App | Workspace | Status | Live URL |
 |-----|-----------|--------|----------|
-| FabricApp_USGS_Earthquake | ws_USGS_Earthquake | 🟢 Live — 3-zone Results screen: animated seismograph header + KPI cards, Leaflet earthquake map with magnitude colours + dark mode tile swap + bidirectional table-map highlight, earthquake photo strip | https://daily-cave-2c1879b505-northeurope.webapp.fabricapps.net |
+| FabricApp_USGS_Earthquake | ws_USGS_Earthquake | 🟢 Live — Results screen: animated seismograph header + KPI cards; table + Leaflet map over pure-CSS crossfading earthquake photo slideshow (4 images, 5 s intervals) | https://daily-cave-2c1879b505-northeurope.webapp.fabricapps.net |
 | FabricApp_RTI_BicycleRentals | ws_RTI_BicycleRentals | 🟢 Live — interactive Leaflet map, status badges, 30s auto-poll, background gallery | https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net |
 | my-rayfin-app | ws_FabricApps | 🟡 Learning | https://lucid-iris-65e5e06ded-northeurope.webapp.fabricapps.net |
 

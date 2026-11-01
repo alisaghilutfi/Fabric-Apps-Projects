@@ -9,12 +9,7 @@ import imgSf1906Train from './assets/earthquakes/sf1906train.jpg';
 import imgKobe1995 from './assets/earthquakes/kobe1995.jpg';
 import imgAegean2020 from './assets/earthquakes/aegean2020.jpg';
 
-const PHOTO_STRIP = [
-  { src: imgSf1906,      caption: 'San Francisco, 1906' },
-  { src: imgSf1906Train, caption: 'SF Railway, 1906'    },
-  { src: imgKobe1995,    caption: 'Kobe, 1995'          },
-  { src: imgAegean2020,  caption: 'Aegean Sea, 2020'    },
-];
+const SLIDESHOW_IMGS = [imgSf1906, imgSf1906Train, imgKobe1995, imgAegean2020];
 
 type Screen = 'search' | 'results' | 'subscribe';
 
@@ -183,6 +178,41 @@ function SeismographAnimBg() {
           </g>
         ))}
       </svg>
+    </>
+  );
+}
+
+function SlideshowBg() {
+  const n = SLIDESHOW_IMGS.length; // 4
+  const duration = n * 5;          // 20s total cycle
+  return (
+    <>
+      <style>{`
+        @keyframes slide-fade {
+          0%                        { opacity: 1; }
+          ${(1 / n) * 100 - 5}%    { opacity: 1; }
+          ${(1 / n) * 100}%        { opacity: 0; }
+          ${100 - 5}%               { opacity: 0; }
+          100%                      { opacity: 1; }
+        }
+      `}</style>
+      {SLIDESHOW_IMGS.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            animationName: 'slide-fade',
+            animationDuration: `${duration}s`,
+            animationTimingFunction: 'ease-in-out',
+            animationIterationCount: 'infinite',
+            animationDelay: `${i * 5}s`,
+            opacity: i === 0 ? 1 : 0,
+          }}
+        />
+      ))}
+      <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
     </>
   );
 }
@@ -415,101 +445,84 @@ export default function App() {
         </div>
       </div>
 
-      {/* Zone 2 — Data: table + map on solid surface */}
-      <main className="flex-1 px-600 py-500 max-w-4xl mx-auto w-full">
-        {earthquakes.length === 0 ? (
-          <div className="bg-card border border-border rounded-xl p-800 text-center mb-600">
-            <p className="text-muted-foreground text-300">No earthquakes recorded in the last 30 days for {countryName || countryCode}.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-400 mb-600">
-            {/* Table — scrollable */}
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <div className="overflow-y-auto" style={{ maxHeight: '300px' }} ref={tableRef}>
-                <table className="w-full text-300">
-                  <thead className="sticky top-0 z-10">
-                    <tr className="bg-primary text-primary-foreground">
-                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Time</th>
-                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Location</th>
-                      <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider">Mag</th>
-                      <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider hidden sm:table-cell">Class</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {earthquakes.map((eq, i) => {
-                      const eqId = String(eq.ID ?? `${eq['Event Time']}-${eq.Magnitude}`);
-                      const isHighlighted = eqId === highlightId;
-                      return (
-                        <tr
-                          key={eqId}
-                          data-eq-id={eqId}
-                          onClick={() => setHighlightId(eqId)}
-                          className={cn(
-                            'border-t border-border transition-colors cursor-pointer',
-                            isHighlighted
-                              ? 'bg-primary/15 border-l-4 border-l-primary'
-                              : i % 2 === 0 ? 'bg-card hover:bg-muted/50' : 'bg-background hover:bg-muted/50'
-                          )}
-                        >
-                          <td className="px-400 py-300 text-muted-foreground font-mono text-200 whitespace-nowrap">
-                            {eq['Event Time'] ? new Date(String(eq['Event Time'])).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                          </td>
-                          <td className="px-400 py-300 text-foreground">{eq['Place Description'] ?? '—'}</td>
-                          <td className="px-400 py-300 text-right font-bold text-primary" style={{ fontFamily: 'var(--font-numeric)' }}>
-                            {eq.Magnitude != null ? Number(eq.Magnitude).toFixed(1) : '—'}
-                          </td>
-                          <td className="px-400 py-300 hidden sm:table-cell">
-                            <span className={cn('text-100 font-semibold px-300 py-100 rounded-full uppercase tracking-widest', sigBadge(eq['Significance Class']))}>
-                              {eq['Significance Class'] ?? '—'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+      {/* Zone 2 — Data: table + map over photo slideshow */}
+      <div className="flex-1 relative overflow-hidden">
+        <SlideshowBg />
+        <main className="relative z-10 px-600 py-500 max-w-4xl mx-auto w-full">
+          {earthquakes.length === 0 ? (
+            <div className="bg-card/90 border border-border rounded-xl p-800 text-center mb-600">
+              <p className="text-muted-foreground text-300">No earthquakes recorded in the last 30 days for {countryName || countryCode}.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-400 mb-600">
+              {/* Table — scrollable */}
+              <div className="bg-card/90 border border-border rounded-xl overflow-hidden backdrop-blur-sm">
+                <div className="overflow-y-auto" style={{ maxHeight: '300px' }} ref={tableRef}>
+                  <table className="w-full text-300">
+                    <thead className="sticky top-0 z-10">
+                      <tr className="bg-primary text-primary-foreground">
+                        <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Time</th>
+                        <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider">Location</th>
+                        <th className="text-right px-400 py-300 font-semibold text-200 uppercase tracking-wider">Mag</th>
+                        <th className="text-left px-400 py-300 font-semibold text-200 uppercase tracking-wider hidden sm:table-cell">Class</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {earthquakes.map((eq, i) => {
+                        const eqId = String(eq.ID ?? `${eq['Event Time']}-${eq.Magnitude}`);
+                        const isHighlighted = eqId === highlightId;
+                        return (
+                          <tr
+                            key={eqId}
+                            data-eq-id={eqId}
+                            onClick={() => setHighlightId(eqId)}
+                            className={cn(
+                              'border-t border-border transition-colors cursor-pointer',
+                              isHighlighted
+                                ? 'bg-primary/15 border-l-4 border-l-primary'
+                                : i % 2 === 0 ? 'bg-card hover:bg-muted/50' : 'bg-background hover:bg-muted/50'
+                            )}
+                          >
+                            <td className="px-400 py-300 text-muted-foreground font-mono text-200 whitespace-nowrap">
+                              {eq['Event Time'] ? new Date(String(eq['Event Time'])).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                            </td>
+                            <td className="px-400 py-300 text-foreground">{eq['Place Description'] ?? '—'}</td>
+                            <td className="px-400 py-300 text-right font-bold text-primary" style={{ fontFamily: 'var(--font-numeric)' }}>
+                              {eq.Magnitude != null ? Number(eq.Magnitude).toFixed(1) : '—'}
+                            </td>
+                            <td className="px-400 py-300 hidden sm:table-cell">
+                              <span className={cn('text-100 font-semibold px-300 py-100 rounded-full uppercase tracking-widest', sigBadge(eq['Significance Class']))}>
+                                {eq['Significance Class'] ?? '—'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Map — always dark tiles to stay readable over photo bg */}
+              <div className="border border-border rounded-xl overflow-hidden" style={{ height: '340px' }}>
+                <EarthquakeMap
+                  points={mapPoints}
+                  isDark={true}
+                  highlightId={highlightId}
+                  onSelectId={handleMapSelect}
+                />
               </div>
             </div>
+          )}
 
-            {/* Map */}
-            <div className="bg-card border border-border rounded-xl overflow-hidden" style={{ height: '340px' }}>
-              <EarthquakeMap
-                points={mapPoints}
-                isDark={isDark}
-                highlightId={highlightId}
-                onSelectId={handleMapSelect}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Zone 3 — Photo strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-300 mb-600">
-          {PHOTO_STRIP.map(p => (
-            <div key={p.caption} className="relative rounded-xl overflow-hidden" style={{ height: '200px' }}>
-              <img
-                src={p.src}
-                alt={p.caption}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div
-                className="absolute bottom-0 left-0 right-0 px-300 py-200"
-                style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)' }}
-              >
-                <span className="text-200 text-white font-medium">{p.caption}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <button
-          onClick={() => { setSubDone(false); setScreen('subscribe'); }}
-          className="bg-primary text-primary-foreground rounded-lg px-600 py-300 text-300 font-semibold hover:opacity-90 transition-opacity"
-        >
-          🔔 Subscribe — {countryName || countryCode}
-        </button>
-      </main>
+          <button
+            onClick={() => { setSubDone(false); setScreen('subscribe'); }}
+            className="bg-primary text-primary-foreground rounded-lg px-600 py-300 text-300 font-semibold hover:opacity-90 transition-opacity"
+          >
+            🔔 Subscribe — {countryName || countryCode}
+          </button>
+        </main>
+      </div>
     </div>
   );
 

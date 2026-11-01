@@ -41,14 +41,13 @@ traces on dark gradient), dark overlay, white/white-70 text on bg.
   fitBounds to result set, OSM (light) / CartoDB Dark Matter (dark) tile swap
 - Bidirectional highlight: clicking table row or map marker syncs both
 
-**Zone 3 — Photo strip** (between map and Subscribe button):
-- 4 public domain earthquake photos from Wikimedia Commons (bundled as static assets)
-- 2-col/4-col responsive grid, 200px fixed height, object-cover, rounded-xl
-- Bottom-left caption overlay with gradient fade (bg-black/40 gradient)
-- Photos: SF 1906 street damage, SF 1906 railway wreck, Kobe 1995 port memorial, Aegean 2020 rubble
-- Files: `src/assets/earthquakes/` (sf1906.jpg, sf1906train.jpg, kobe1995.jpg, aegean2020.jpg)
+**Zone 2 photo slideshow bg:** 4 images cycle every 5 s via pure CSS `@keyframes slide-fade` with
+staggered `animation-delay` (0s, 5s, 10s, 15s); no JS timer. bg-black/60 overlay for readability.
+Table: bg-card/90 + backdrop-blur-sm. Map: always CartoDB Dark Matter tiles (isDark=true hard-coded)
+— OSM light tiles look washed-out over the photo bg.
+Files: `src/assets/earthquakes/` (sf1906.jpg, sf1906train.jpg, kobe1995.jpg, aegean2020.jpg)
 
-**Subscribe button** at bottom.
+**Subscribe button** at bottom of Zone 2.
 
 ### Subscribe
 AlertSubscription entity write (countryCode + minMagnitude slider), success/error states.
@@ -69,16 +68,15 @@ Policy: authenticated user owns their own record (claims.sub.eq(item.userId))
 - Subscribe screen: not yet tested end-to-end with a real user session (entity write)
 - Root.spec.tsx: no known failures at last deploy
 
-## Last Session -- 2026-11-01 (session 3)
+## Last Session -- 2026-11-01 (session 4)
 
 ### What was done
-- Downloaded 4 public domain earthquake photos from Wikimedia Commons into
-  `packages/frontend/src/assets/earthquakes/` (sf1906.jpg, sf1906train.jpg, kobe1995.jpg, aegean2020.jpg)
-- Added Zone 1 animated header to Results screen: wrapped title + KPI cards in a relative div
-  with `SeismographAnimBg` (reuses Search screen component); white/white-60 text on dark bg
-- Added Zone 3 photo strip below the map: 4-photo responsive grid (2-col mobile / 4-col desktop),
-  200px fixed height, object-cover, rounded-xl, bottom-left caption with gradient overlay
-- Frontend TS typecheck: zero errors; Vite build: clean (photos bundled as static assets)
+- Removed Zone 3 photo strip from Results screen
+- Replaced Zone 2 solid background with `SlideshowBg`: pure CSS crossfade cycling through
+  all 4 earthquake photos every 5 s (`@keyframes slide-fade`, staggered `animation-delay`)
+- bg-black/60 overlay on slideshow for table/map readability
+- Table: bg-card/90 + backdrop-blur-sm; map: CartoDB Dark Matter always (isDark hard-coded true)
+- Frontend TS typecheck: zero errors; Vite build: clean
 - Deployed via `npx rayfin up`
 
 ### Current state
