@@ -13,6 +13,8 @@ services:
       enabled: false
     allowedRedirectUris:
       - http://localhost:5173
+      - http://127.0.0.1:5173
+      - https://hefty-pearl-60b5367c54-northeurope.webapp.fabricapps.net
   data:
     enabled: false
     path: packages/data
@@ -26,6 +28,10 @@ services:
     assetAccess: protected
     embedded:
       only: false
+  storage:
+    enabled: false
+  functions:
+    enabled: false
 connectors:
   - name: sm_governance
     type: fabric-semanticmodel
