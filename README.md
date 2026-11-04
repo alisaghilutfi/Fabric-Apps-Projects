@@ -7,6 +7,7 @@ Portfolio of Microsoft Fabric Apps built with the Rayfin SDK.
 | FabricApp_USGS_Earthquake | ws_USGS_Earthquake | 🟢 Live — Results screen: animated seismograph header + KPI cards; table + Leaflet/OSM map over pure-CSS crossfading earthquake photo slideshow (4 images, 5 s intervals) | https://daily-cave-2c1879b505-northeurope.webapp.fabricapps.net |
 | FabricApp_RTI_BicycleRentals | ws_RTI_BicycleRentals | 🟢 Live — interactive Leaflet map, status badges, 30s auto-poll, background gallery | https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net |
 | my-rayfin-app | ws_FabricApps | 🟡 Learning | https://lucid-iris-65e5e06ded-northeurope.webapp.fabricapps.net |
+| FabricApp_Governance | ws_Governance_Dev | 🟢 Live — MVP | https://hefty-pearl-60b5367c54-northeurope.webapp.fabricapps.net |
 
 ## Access & Authentication
 
@@ -17,6 +18,7 @@ All three apps require Microsoft sign-in (`externalEntraExchange: true` in `rayf
 | FabricApp_RTI_BicycleRentals | Viewer role on `ws_RTI_BicycleRentals` — required for the delegated semantic model connector (DAX queries run under the signed-in user's identity) |
 | FabricApp_USGS_Earthquake | Viewer role on `ws_USGS_Earthquake` — same reason |
 | my-rayfin-app | None — uses Rayfin SQL only; any Microsoft account suffices |
+| FabricApp_Governance | Viewer role on `ws_Governance_Dev` — required for the delegated semantic model connector |
 
 To grant access for a demo: invite the attendee to the relevant Fabric workspace as Viewer before the session.
 
