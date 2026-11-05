@@ -19,19 +19,22 @@ Read-only — no Rayfin SQL database.
 
 | Screen | Route | Description |
 |--------|-------|-------------|
-| Tenant Health Overview | default | 4 KPI cards, horizontal bar chart sorted worst-first, workspace table with clickable rows |
+| Tenant Health Overview | default | 4 KPI cards, score distribution histogram, rule frequency chart, horizontal bar chart sorted worst-first, workspace table with clickable rows |
 | Workspace Detail | drill-down | Header card (name, score, state, admins, git badge), Violations tab (severity badge, ruleId, detail), Items tab (name, type, lastActivityDate) |
-| Violations Explorer | nav link | Flat violations table, severity filter (All/High/Medium/Low), Export CSV |
+| Violations Explorer | nav link | Rule summary table (ruleId, severity, count), flat violations table, severity filter (All/High/Medium/Low), Export CSV |
 
 ## Last Session — 2026-11-05
 
-- Added score distribution histogram to Overview (5 bands, computed from loaded workspaces, red/amber/green)
-- Added top-10 rule frequency horizontal bar chart to Overview (new SUMMARIZECOLUMNS DAX query, colored by severity)
-- Added rule summary table to Violations Explorer (grouped by ruleId+severity, sorted by count desc, no new query)
-- Fixed connector registration: backend had stale logical ID `2514647e-...` from prior deploy; re-registered with `--yes` using item ID `0d12fbd0-...` and redeployed both Governance and RTI apps
+- Added 3 UI enhancements to App.tsx:
+  1. **Score Distribution Histogram** — 5 bands (0–19, 20–39, 40–59, 60–79, 80–100), computed from loaded workspaces array, no new DAX query, horizontal bars colored red/amber/green by band
+  2. **Top Violations by Rule chart** — horizontal bar chart of top 10 rules by violation count, new DAX query against `gold_health_rule_results`, bars colored by severity
+  3. **Rule Summary Table** — compact summary in Violations Explorer above flat violations list, grouped by rule_id + severity, sorted by count descending
+- Connector "not declared" error root cause identified and fixed: stale logical ID (`2514647e-...`) registered on backend from prior deploy; fixed by `npx rayfin connector add --yes` with correct item ID (`0d12fbd0-...`) then `npx rayfin up`
+- Same fix applied to FabricApp_RTI_BicycleRentals connector
+- Local dev verification blocked by persistent connector error on localhost — all verification done on live URL instead
+- Live smoke test passed: all 3 enhancements render with real data
 - Pre-deploy gates: tsc PASS, build PASS, lint PASS, 67/67 tests PASS
-- Deployed: https://hefty-pearl-60b5367c54-northeurope.webapp.fabricapps.net
-- Commit: 78bab8e
+- Commits: `78bab8e` (feat enhancements), `c6d48d5` (docs), `cf50f14` (HARNESS.md gotcha)
 
 ## Open Items
 
@@ -41,7 +44,11 @@ Read-only — no Rayfin SQL database.
 2. **git_connected shows "No Git" for most workspaces** — Scanner field not reliably populated
 3. **NO_SENSITIVITY_LABEL dominates violations** — drives all health scores to 0; consider down-weighting that rule or separating it from the score
 
-### UI enhancements (next session)
+### Local dev environment
+
+- **`rayfin dev` connector error** — investigate whether dev session can be made to work without requiring `rayfin up` first; may be an SDK issue with how runtime config is seeded on first deploy
+
+### UI enhancements (future)
 
 - Pagination or virtual scrolling for large violation lists
 - Score trend over time (requires time-series data in gold layer)
