@@ -263,6 +263,7 @@ these ARE committed (deployment state, not secrets).
 | `Set-Content -Encoding UTF8` writes BOM | Use `[IO.File]::WriteAllText($p, $content, (New-Object System.Text.UTF8Encoding($false)))` for any file TypeScript/Vite will consume |
 | PS 5.1 strips inner double-quotes from single-quoted JSON | Use `--% ` stop-parsing token for connector invoke: `npx rayfin --% connector invoke ...` |
 | Heredoc (`<< 'EOF'`) doesn't work in PowerShell | Use Git Bash for multi-line file writes |
+| Connector "not declared in rayfin.config.yaml" on dev server | Stale logical ID registered on backend from a prior deploy. Fix: `npx rayfin connector add --yes` with the correct `item ID` (from `id` field, not `logicalId`), then `npx rayfin up` to push corrected config |
 
 ---
 
@@ -278,4 +279,4 @@ the SQL database directly in the portal (causes schema conflicts).
 
 ---
 
-*Last updated: 2026-10-29*
+*Last updated: 2026-11-05*
