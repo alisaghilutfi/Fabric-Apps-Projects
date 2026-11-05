@@ -5,6 +5,12 @@ import { cn } from './lib/utils';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+interface RuleFrequency {
+  ruleId: string;
+  severity: string;
+  count: number;
+}
+
 interface WorkspaceHealth {
   workspaceId: string;
   name: string;
@@ -200,6 +206,108 @@ function EmptyRow({ cols, message }: { cols: number; message: string }) {
   );
 }
 
+// ─── Shared Chart Components ─────────────────────────────────────────────────
+
+function ScoreHistogram({ workspaces }: { workspaces: WorkspaceHealth[] }) {
+  const bands = ['0–19', '20–39', '40–59', '60–79', '80–100'];
+  const bandCounts = [0, 0, 0, 0, 0];
+  workspaces.forEach(w => {
+    const s = w.score ?? 0;
+    if (s < 20) bandCounts[0]++;
+    else if (s < 40) bandCounts[1]++;
+    else if (s < 60) bandCounts[2]++;
+    else if (s < 80) bandCounts[3]++;
+    else bandCounts[4]++;
+  });
+  const bandColors = ['#c50f1f', '#c50f1f', '#d97706', '#d97706', '#107c10'];
+  const maxCount = Math.max(...bandCounts, 1);
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-500 mb-500">
+      <div className="text-100 text-muted-foreground uppercase tracking-widest font-mono mb-300">
+        Score Distribution
+      </div>
+      <div className="space-y-200">
+        {bands.map((band, i) => (
+          <div key={band} className="flex items-center gap-300">
+            <div
+              className="text-200 text-muted-foreground font-mono text-right"
+              style={{ minWidth: '52px' }}
+            >
+              {band}
+            </div>
+            <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${(bandCounts[i] / maxCount) * 100}%`,
+                  backgroundColor: bandColors[i],
+                }}
+              />
+            </div>
+            <div
+              className="text-200 font-bold w-6 text-right tabular-nums"
+              style={{ color: bandColors[i], fontFamily: 'var(--font-numeric)' }}
+            >
+              {bandCounts[i]}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RuleFrequencyChart({ rules }: { rules: RuleFrequency[] }) {
+  const maxCount = Math.max(...rules.map(r => r.count), 1);
+
+  function ruleBarColor(severity: string): string {
+    if (severity === 'High') return '#c50f1f';
+    if (severity === 'Medium') return '#d97706';
+    return '#616161';
+  }
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-500 mb-500">
+      <div className="text-100 text-muted-foreground uppercase tracking-widest font-mono mb-300">
+        Top Violations by Rule
+      </div>
+      {rules.length === 0 ? (
+        <p className="text-muted-foreground text-300">No rule data available.</p>
+      ) : (
+        <div className="space-y-200">
+          {rules.map(r => (
+            <div key={r.ruleId} className="flex items-center gap-300">
+              <div
+                className="text-200 text-muted-foreground font-mono truncate text-right"
+                style={{ minWidth: '200px', maxWidth: '240px' }}
+                title={r.ruleId}
+              >
+                {r.ruleId}
+              </div>
+              <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${(r.count / maxCount) * 100}%`,
+                    backgroundColor: ruleBarColor(r.severity),
+                  }}
+                />
+              </div>
+              <div
+                className="text-200 font-bold w-10 text-right tabular-nums"
+                style={{ color: ruleBarColor(r.severity), fontFamily: 'var(--font-numeric)' }}
+              >
+                {r.count}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Screen 1: Tenant Health Overview ────────────────────────────────────────
 
 function OverviewScreen({
@@ -215,6 +323,7 @@ function OverviewScreen({
 }) {
   const [workspaces, setWorkspaces] = useState<WorkspaceHealth[]>([]);
   const [kpis, setKpis] = useState<KpiSummary | null>(null);
+  const [ruleFrequency, setRuleFrequency] = useState<RuleFrequency[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
@@ -281,6 +390,26 @@ function OverviewScreen({
         setWorkspaces(rows);
       } else if (wsResult.status === 'error') {
         setError(wsResult.error.message);
+      }
+
+      const ruleResult = await client.connectors.sm_governance.executeQuery({
+        query: `EVALUATE
+SUMMARIZECOLUMNS(
+    gold_health_rule_results[rule_id],
+    gold_health_rule_results[severity],
+    "ViolationCount", COUNTROWS(gold_health_rule_results)
+)
+ORDER BY [ViolationCount] DESC`,
+      });
+
+      if (ruleResult.status === 'success') {
+        const objs = rowsToObjects(ruleResult.table.columns, ruleResult.table.rows as unknown[][]);
+        const rows: RuleFrequency[] = objs.map(o => ({
+          ruleId: String(o['rule_id'] ?? ''),
+          severity: String(o['severity'] ?? 'Low'),
+          count: Number(o['ViolationCount'] ?? 0),
+        }));
+        setRuleFrequency(rows.slice(0, 10));
       }
 
       setLoaded(true);
@@ -394,6 +523,12 @@ function OverviewScreen({
                 ))}
               </div>
             </div>
+
+            {/* Score histogram */}
+            <ScoreHistogram workspaces={workspaces} />
+
+            {/* Rule frequency chart */}
+            <RuleFrequencyChart rules={ruleFrequency} />
 
             {/* Table */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -821,6 +956,64 @@ function ViolationsScreen({
         </div>
 
         {error && <p className="text-destructive text-300 mb-300">{error}</p>}
+
+        {/* Rule summary table */}
+        {loaded && allViolations.length > 0 && (() => {
+          const summaryMap = new Map<string, { severity: string; count: number }>();
+          allViolations.forEach(v => {
+            const key = `${v.ruleId}||${v.severity}`;
+            const existing = summaryMap.get(key);
+            if (existing) {
+              existing.count++;
+            } else {
+              summaryMap.set(key, { severity: v.severity, count: 1 });
+            }
+          });
+          const summary = Array.from(summaryMap.entries())
+            .map(([key, val]) => ({ ruleId: key.split('||')[0], ...val }))
+            .sort((a, b) => b.count - a.count);
+
+          return (
+            <div className="bg-card border border-border rounded-xl overflow-hidden mb-400">
+              <div className="px-400 pt-300 pb-200 border-b border-border">
+                <span className="text-100 text-muted-foreground uppercase tracking-widest font-mono">
+                  Rule Summary
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-300">
+                  <thead>
+                    <tr className="bg-muted text-muted-foreground">
+                      <th className="text-left px-400 py-200 font-semibold text-200 uppercase tracking-wider">Rule ID</th>
+                      <th className="text-left px-400 py-200 font-semibold text-200 uppercase tracking-wider hidden sm:table-cell">Severity</th>
+                      <th className="text-right px-400 py-200 font-semibold text-200 uppercase tracking-wider">Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.map((row, i) => (
+                      <tr
+                        key={`${row.ruleId}-${row.severity}`}
+                        className={cn(
+                          'border-t border-border',
+                          i % 2 === 0 ? 'bg-card' : 'bg-background'
+                        )}
+                      >
+                        <td className="px-400 py-200 font-mono text-200 text-foreground">{row.ruleId}</td>
+                        <td className="px-400 py-200 hidden sm:table-cell">
+                          <SeverityBadge severity={row.severity} />
+                        </td>
+                        <td className="px-400 py-200 text-right font-bold tabular-nums text-foreground"
+                          style={{ fontFamily: 'var(--font-numeric)' }}>
+                          {row.count}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="text-200 text-muted-foreground mb-300">
           Showing {filtered.length} of {allViolations.length} violations

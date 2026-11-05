@@ -13,7 +13,7 @@ Read-only — no Rayfin SQL database.
 - **Rayfin item ID:** `fabricapp-governance`
 - **Workspace:** `ws_Governance_Dev` (`7ea6403c-9364-4cd5-94c3-3ba6fcfce918`)
 - **Connector:** `sm_governance` → `sm_Governance`
-  (`2514647e-c2a4-4eee-984a-e26da08dccd0` logical / `0d12fbd0-4564-4d2d-b9a9-3f3e5fc647a8` item)
+  (item ID in rayfin.yml: `0d12fbd0-4564-4d2d-b9a9-3f3e5fc647a8` — this is what Rayfin resolves; logical ID `2514647e-c2a4-4eee-984a-e26da08dccd0` is rejected by the backend)
 
 ## Screens
 
