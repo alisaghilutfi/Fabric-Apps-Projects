@@ -23,18 +23,15 @@ Read-only — no Rayfin SQL database.
 | Workspace Detail | drill-down | Header card (name, score, state, admins, git badge), Violations tab (severity badge, ruleId, detail), Items tab (name, type, lastActivityDate) |
 | Violations Explorer | nav link | Flat violations table, severity filter (All/High/Medium/Low), Export CSV |
 
-## Last Session — 2026-11-04
+## Last Session — 2026-11-05
 
-- App scaffolded from `blankapp` template in `ws_Governance_Dev`
-- Packs applied: `connectors`, `analytics`, `visuals`
-- Connector added via `rayfin connector add` using real item ID (logical ID in brief was wrong — resolved via Fabric Core MCP)
-- 3 screens built: Tenant Health Overview (KPI cards, bar chart, workspace table), Workspace Detail (header card, Violations tab, Items tab), Violations Explorer (flat violations table, severity filter, Export CSV)
-- Styling: Tailwind + Segoe UI design tokens, identical to FabricApp_RTI_BicycleRentals global.css
-- Pre-deploy gates: tsc PASS, build PASS (chunk advisory only), lint PASS, 67/67 tests PASS
-- Root.spec.tsx heading assertions updated from scaffold placeholder to "Tenant Health Overview"
+- Added score distribution histogram to Overview (5 bands, computed from loaded workspaces, red/amber/green)
+- Added top-10 rule frequency horizontal bar chart to Overview (new SUMMARIZECOLUMNS DAX query, colored by severity)
+- Added rule summary table to Violations Explorer (grouped by ruleId+severity, sorted by count desc, no new query)
+- Fixed connector registration: backend had stale logical ID `2514647e-...` from prior deploy; re-registered with `--yes` using item ID `0d12fbd0-...` and redeployed both Governance and RTI apps
+- Pre-deploy gates: tsc PASS, build PASS, lint PASS, 67/67 tests PASS
 - Deployed: https://hefty-pearl-60b5367c54-northeurope.webapp.fabricapps.net
-- App backend ID: `8c9b81da-3e15-4d38-a325-22a6c06ef526`
-- Smoke test passed: KPI cards (28 workspaces, 40.5 avg score, 1588 critical violations, 25 single-admin workspaces), bar chart sorted worst-first, drill-down to Workspace Detail, Violations Explorer with severity filters working
+- Commit: 78bab8e
 
 ## Open Items
 
@@ -44,8 +41,8 @@ Read-only — no Rayfin SQL database.
 2. **git_connected shows "No Git" for most workspaces** — Scanner field not reliably populated
 3. **NO_SENSITIVITY_LABEL dominates violations** — drives all health scores to 0; consider down-weighting that rule or separating it from the score
 
-### UI enhancements (next session, after data quality fixed)
+### UI enhancements (next session)
 
-- Score distribution histogram (how many workspaces fall in each band)
-- Violation breakdown chart (rule frequency across tenant)
-- Rule frequency table in Violations Explorer
+- Pagination or virtual scrolling for large violation lists
+- Score trend over time (requires time-series data in gold layer)
+- Workspace search/filter on the Overview table
