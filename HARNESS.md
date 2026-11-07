@@ -37,8 +37,8 @@ until `rayfin up` has run.
 - Commit directly to `main` (no dev/test chain — live state is what `rayfin up` deployed)
 - Conventional commits (`feat:`, `fix:`, `docs:`, `chore:` etc.)
 - `rayfin up` is the deploy boundary — it is to Fabric Apps what `git push` is to code
-- **Never commit:** `rayfin/.env`, `rayfin/.temp/`, `.env.local`, `node_modules/`, `dist/`
-- **DO commit:** `rayfin/.deployments.json`, `rayfin/.lockfile.json`, `rayfin/.project.json` (deployment state, not secrets)
+- **Never commit:** `rayfin/.env`, `rayfin/.temp/`, `rayfin/.deployments.json`, `.env.local`, `node_modules/`, `dist/`
+- **DO commit:** `rayfin/.lockfile.json`, `rayfin/.project.json` (deployment state, not secrets)
 
 ---
 
@@ -243,8 +243,11 @@ rayfin/.env          # contains RAYFIN_WORKSPACE_NAME and keys
 rayfin/.temp/        # generated DAB config — never commit
 ```
 
-`rayfin/.deployments.json`, `rayfin/.lockfile.json`, `rayfin/.project.json` —
+`rayfin/.lockfile.json`, `rayfin/.project.json` —
 these ARE committed (deployment state, not secrets).
+
+`rayfin/.deployments.json` — per-workspace deployment record (fabricItemId, hostingUrl,
+publishableKey, etc.); local-only, gitignored by per-app rules — do not commit.
 
 ---
 

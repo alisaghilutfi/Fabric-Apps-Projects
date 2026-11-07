@@ -11,8 +11,8 @@ Global guardrails: ~/.claude/CLAUDE.md (source: private repo dev-environment).
 ## Git
 - Commit directly to main (no dev/test chain — live state is what rayfin up deployed).
 - Conventional commits.
-- Never commit: rayfin/.env, rayfin/.temp/, .env.local, node_modules/, dist/.
-- rayfin/.deployments.json, rayfin/.lockfile.json, rayfin/.project.json ARE committed (deployment state).
+- Never commit: rayfin/.env, rayfin/.temp/, rayfin/.deployments.json, .env.local, node_modules/, dist/.
+- rayfin/.lockfile.json, rayfin/.project.json ARE committed (deployment state, not secrets).
 
 ## Harness split
 - ProjectPlanner (claude.ai): architecture, entity design, @role policy design, session planning. Never executes.
