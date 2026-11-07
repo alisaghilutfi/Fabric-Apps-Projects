@@ -34,7 +34,6 @@ lerna-debug.log*
 dist-ssr
 *.local
 rayfin/.env*
-!rayfin/.env
 rayfin/.*.tmp
 rayfin/.temp/
 rayfin.config.json
