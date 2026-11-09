@@ -25,6 +25,24 @@ operations. Never makes architectural decisions without ProjectPlanner input.
 - ProjectPlanner does not execute any of these; they are FabricEngineer's responsibility
 - Commit goes to `main` directly (no dev/test chain — deploy is `rayfin up`)
 
+### /goal pattern (long sessions)
+
+For sessions involving multi-step operations or a turn limit, declare the goal at the start:
+
+```
+/goal: <what we are trying to complete this session>
+```
+
+Then follow this discipline throughout the session:
+
+- After each major step, state the remaining steps explicitly.
+- If blocked mid-session, report:
+  `BLOCKED: <reason> — options: <A | B>`
+- At a natural break or approaching the turn limit, report:
+  `CHECKPOINT: completed <X>, remaining <Y>, next session starts at <Z>`
+
+This prevents silent drift in long sessions where the original goal gets lost across many turns.
+
 **`rayfin up` is the execution boundary.** It is to Fabric Apps what
 `git push` is to code — it provisions or updates the live Fabric items
 (SQL child, Functions, app URL). Do not treat a file edit as a deploy
