@@ -3,5 +3,6 @@ dist/
 .env
 **/rayfin/.env
 **/rayfin/.temp/
+**/rayfin/.deployments.json
 *.log
 .DS_Store
