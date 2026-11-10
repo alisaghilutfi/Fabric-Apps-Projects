@@ -300,4 +300,11 @@ the SQL database directly in the portal (causes schema conflicts).
 
 ---
 
-*Last updated: 2026-11-05*
+## Implementation Waves
+
+| Wave | Item | Repo | Commit | Status |
+|------|------|------|--------|--------|
+| 3 | B4 — dev-environment pre-commit hook | dev-environment | 9ffe10a (main) | ✅ Done 2026-11-10 |
+| 3 | D5 — Fabric-Apps pre-commit hook + grep fix | Fabric-Apps-Projects | f193ff3, a6b9846 (main) | ✅ Done 2026-11-10 |
+
+*Last updated: 2026-11-10*

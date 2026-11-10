@@ -11,3 +11,10 @@
 - 🟢 Live — deployed, frontend complete
 - 🟡 Learning — backend deployed, frontend in progress
 - 🔴 Blocked — see CONTEXT.md for details
+
+## Repo harness — implementation waves
+
+| Wave | Item | Commit | Completed |
+|------|------|--------|-----------|
+| 3 | B4 — dev-environment pre-commit hook | 9ffe10a (dev-environment main) | 2026-11-10 |
+| 3 | D5 — Fabric-Apps pre-commit hook + grep variable fix | f193ff3, a6b9846 (main) | 2026-11-10 |
