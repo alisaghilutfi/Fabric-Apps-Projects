@@ -22,6 +22,6 @@ READ-ONLY. Do not run rayfin, npx, or any execution command. The only shell call
 6. Report status in 3–5 bullets covering: what is deployed (live URL if known), what schema version is active, what is in progress, what is blocked.
 7. State any hard blockers that prevent work from starting.
 8. Search `apps/$ARGUMENTS/CONTEXT.md` for lines or sections containing "Next development" or "Next session". Print each one found. If none found, say so.
-9. Offer: "Run app-explorer for a full inventory of `$ARGUMENTS`? (yes/no)"
+9. Offer: "Run app-explorer for a full inventory of all apps? (yes/no)"
 
 STOP after the report. Do not execute any step until the user confirms which step to take.

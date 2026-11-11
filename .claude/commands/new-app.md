@@ -67,7 +67,7 @@ Complete all of these before the first commit:
 
 ```
 git add apps/$ARGUMENTS/ PROJECTS.md README.md
-git commit -m "feat: scaffold $ARGUMENTS (D11)"
+git commit -m "feat: scaffold $ARGUMENTS"
 git push origin main
 ```
 
