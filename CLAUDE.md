@@ -28,9 +28,12 @@ Global guardrails: ~/.claude/CLAUDE.md (source: private repo dev-environment).
 - After editing rayfin/connectors/** or rayfin.yml: npx rayfin up (from the app folder)
 - After editing packages/data/src/**: npx rayfin up db apply (from the app folder; requires rayfin up to have run once)
   (the drift hook also injects these)
-- At the start of every session run: /fabric-app-pane C:\Users\alisa\DS-ML-DL\Fabric-Apps-Projects\apps
+- /session-start <AppName> -- read-only session-start report: deploy status, open items, and next step (project command).
+- /end-session <AppName> -- trigger session-recap-writer to update CONTEXT.md, PROJECTS.md, README.md, then commit (project command).
+- /new-app <AppName> -- scaffold a new Fabric App with dialect and data.enabled pre-flight (project command).
+- At the start of every session run: /tui fullscreen, then /fabric-app-pane C:\Users\alisa\DS-ML-DL\Fabric-Apps-Projects\apps
 
 ## Directories and files to avoid
-- Never commit: rayfin/.env, rayfin/.temp/, rayfin/.deployments.json, .env.local, node_modules/, dist/.
+- Never commit: rayfin/.env* (any .env or .env.* except .env.example), rayfin/.temp/, rayfin/.deployments.json, .env.local, node_modules/, dist/.
 - rayfin/.lockfile.json, rayfin/.project.json ARE committed (deployment state, not secrets).
 - Never edit the Fabric SQL database directly in the portal.

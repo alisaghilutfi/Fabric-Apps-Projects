@@ -55,19 +55,42 @@ until `rayfin up` has run.
 - Commit directly to `main` (no dev/test chain — live state is what `rayfin up` deployed)
 - Conventional commits (`feat:`, `fix:`, `docs:`, `chore:` etc.)
 - `rayfin up` is the deploy boundary — it is to Fabric Apps what `git push` is to code
-- **Never commit:** `rayfin/.env`, `rayfin/.temp/`, `rayfin/.deployments.json`, `.env.local`, `node_modules/`, `dist/`
+- **Never commit:** `rayfin/.env*` (any `.env` or `.env.*` except `.env.example`), `rayfin/.temp/`, `rayfin/.deployments.json`, `.env.local`, `node_modules/`, `dist/`
 - **DO commit:** `rayfin/.lockfile.json`, `rayfin/.project.json` (deployment state, not secrets)
 
 ---
 
 ## MCP & Plugins Configuration
 
-- **Fabric App pane:** run `/tui fullscreen` then `/fabric-app-pane C:\Users\alisa\DS-ML-DL\Fabric-Apps-Projects\apps` at session start — this is already wired in `CLAUDE.md` as a startup instruction
+- **Fabric App pane:** run `/tui fullscreen` then `/fabric-app-pane C:\Users\alisa\DS-ML-DL\Fabric-Apps-Projects\apps` at session start — CLAUDE.md instructs you to run these manually at session start
 - **skills-for-fabric v0.3.19:** `powerbi-authoring` and `fabric-skills` plugins loaded at user scope; both MCP servers connect at session start
 - **Session startup checklist:**
-  - CLAUDE.md startup instruction launches the app pane automatically
+  - Run `/tui fullscreen` and `/fabric-app-pane` manually at session start
   - F2 capacity must be running before `rayfin up` or `npx rayfin up db apply`
   - Remind to pause F2 capacity at session end
+
+---
+
+## Session automation (2026-11-11)
+
+- **Hooks (`.claude/hooks/`):**
+  - `session-start.ps1` — runs at `SessionStart`; prints MCP status, Azure login, and git branch to the session preamble.
+  - `post-edit-rayfin.ps1` — runs at `PostToolUse` (Edit|Write); detects connector/rayfin.yml or entity schema changes and injects the matching deploy reminder.
+- **Pre-commit (`.githooks/pre-commit`):** blocks `rayfin/.temp/` and `rayfin/.deployments.json` at any depth, any `.env` or `.env.*` file except `.env.example`, and secrets (SP client secrets, account keys, SAS tokens, bearer tokens, plaintext passwords). One-time setup per clone: `git config core.hooksPath .githooks`
+- **Project commands (`.claude/commands/`):**
+  - `/session-start <AppName>` — read-only session-start report: deploy status, open items, next step.
+  - `/end-session <AppName>` — trigger session-recap-writer to update CONTEXT.md, PROJECTS.md, README.md, then commit.
+  - `/new-app <AppName>` — scaffold a new Fabric App with dialect and data.enabled pre-flight.
+- **User-level commands (`~/.claude/commands/`, deployed from dev-environment):**
+  - `/start` — global session-start ritual (MCP check, az login, git status).
+  - `/pause-capacity` — pause the F2 Fabric capacity via Azure CLI.
+- **Agents (`.claude/agents/`):**
+  - `app-explorer` — inventories all apps in the repo; reports a snapshot table. Read-only.
+  - `deploy-checker` — pre-deploy gate for a Rayfin app; returns READY or BLOCKERS verdict. Read-only.
+  - `entity-reviewer` — security and correctness reviewer for entity files in `packages/data/src/`. Reports findings; never fixes anything.
+  - `session-recap-writer` — end-of-session enforcer; updates CONTEXT.md, PROJECTS.md, and root README.md.
+- **Skills:** `analyst-mindset` is a global skill (`~/.claude/skills/`, source dev-environment `claude/skills/`); AI-readiness guidance comes from the `fabric-skills` plugin.
+- **Tooling source of truth:** private repo `dev-environment`; edit templates there, then deploy with `setup/onboard-repo.ps1 -Profile fabric-apps`.
 
 ---
 
@@ -257,7 +280,7 @@ Rayfin's own `.gitignore` in the scaffold covers most of these, but verify:
 ```
 node_modules/
 dist/
-rayfin/.env          # contains RAYFIN_WORKSPACE_NAME and keys
+rayfin/.env*         # any .env or .env.* file except .env.example
 rayfin/.temp/        # generated DAB config — never commit
 ```
 
@@ -306,5 +329,6 @@ the SQL database directly in the portal (causes schema conflicts).
 |------|------|------|--------|--------|
 | 3 | B4 — dev-environment pre-commit hook | dev-environment | 9ffe10a (main) | ✅ Done 2026-11-10 |
 | 3 | D5 — Fabric-Apps pre-commit hook + grep fix | Fabric-Apps-Projects | f193ff3, a6b9846 (main) | ✅ Done 2026-11-10 |
+| 3 | D5 fix — hook matches apps/<App>/rayfin and all .env variants | dev-environment, Fabric-Apps-Projects | 2502c48, 5b5ccc7 (main) | ✅ Done 2026-11-11 |
 
-*Last updated: 2026-11-10*
+*Last updated: 2026-11-11*
