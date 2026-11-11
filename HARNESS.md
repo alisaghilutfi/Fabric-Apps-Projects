@@ -91,6 +91,7 @@ until `rayfin up` has run.
   - `session-recap-writer` — end-of-session enforcer; updates CONTEXT.md, PROJECTS.md, and root README.md.
 - **Skills:** `analyst-mindset` is a global skill (`~/.claude/skills/`, source dev-environment `claude/skills/`); AI-readiness guidance comes from the `fabric-skills` plugin.
 - **Tooling source of truth:** private repo `dev-environment`; edit templates there, then deploy with `setup/onboard-repo.ps1 -Profile fabric-apps`.
+- **Deny rules (`.claude/settings.json`, `permissions.deny`):** blocks Claude Code's Edit/Write tools on `rayfin/.temp/**` and `rayfin/.deployments.json`; blocks the Bash tool on `git push --force` and `git push -f` in any argument position. These rules cover Claude Code's built-in tools only — not Bash subprocesses or your own terminal. Source: `dev-environment/templates/fabric-apps/settings.fragment.json`.
 
 ---
 
