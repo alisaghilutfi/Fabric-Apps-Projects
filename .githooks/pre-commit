@@ -1,17 +1,21 @@
 #!/bin/sh
 # Fabric-Apps profile pre-commit — blocks rayfin runtime artefacts and secrets.
 
-# Block rayfin runtime files.
-rayfin_hits=$(git diff --cached --name-only --diff-filter=ACM \
-  | grep -E '^rayfin/\.env$|^rayfin/\.temp/|^rayfin/\.deployments\.json$')
-if [ -n "$rayfin_hits" ]; then
-  echo "Blocked: rayfin runtime files must not be committed:"
-  echo "$rayfin_hits"
+# Block rayfin runtime files and env files at any depth.
+RAYFIN_PAT='(^|/)rayfin/\.temp/|(^|/)rayfin/\.deployments\.json$'
+ENV_PAT='(^|/)\.env(\.[^/]*)?$'
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+rayfin_hits=$(echo "$staged" | grep -E "$RAYFIN_PAT")
+env_hits=$(echo "$staged" | grep -E "$ENV_PAT" | grep -vE '\.env\.example$')
+if [ -n "$rayfin_hits" ] || [ -n "$env_hits" ]; then
+  echo "Blocked: rayfin runtime or env files must not be committed:"
+  [ -n "$rayfin_hits" ] && echo "$rayfin_hits"
+  [ -n "$env_hits" ] && echo "$env_hits"
   echo "These files hold live deploy state or secrets (override: git commit --no-verify)."
   exit 1
 fi
 
-# Secret scanning — block Azure SP secrets, connection strings, bearer tokens.
+# Secret scanning -- block Azure SP secrets, connection strings, bearer tokens.
 SECRET_PAT='"client[Ss]ecret"[[:space:]]*:[[:space:]]*"[^"]{8,}"|AccountKey=[A-Za-z0-9+/]{20,}={0,2}|SharedAccessSignature=[^"&[:space:]]{20,}|[Bb]earer[[:space:]]+ey[A-Za-z0-9._-]{20,}|password[[:space:]]*=[[:space:]]*[A-Za-z0-9!@#$%^&*]{8,}'
 secrets=$(git diff --cached -U0 --diff-filter=ACM \
   | grep -E '^\+' \
