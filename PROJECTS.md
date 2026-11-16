@@ -6,7 +6,7 @@
 | FabricApp_RTI_BicycleRentals | ws_RTI_BicycleRentals | 🟢 Live — All 5 phases complete. KPI cards, sparkline, map, badges, live poll deployed. Eventstream deactivated. Post-demo: mark-resolved flow, neighbourhood filter, rpt_ report. Auth: external Entra accounts supported; workspace Viewer role required for DAX connector. | https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net | 3d942f93-b1f3-4e01-abf8-e664b0ff969b |
 | my-rayfin-app | ws_FabricApps | 🟢 Live | https://lucid-iris-65e5e06ded-northeurope.webapp.fabricapps.net | af9bbcd3-57c2-469c-a513-18c5ce89f854 |
 | FabricApp_Governance | ws_Governance_Dev | 🟢 Active — UI enhancements live (score histogram, rule frequency chart, rule summary table added 2026-11-05). Connector stale-ID bug fixed for both Governance and RTI. Blockers: none app-side. Next session: data quality fixes in Fabric-Analytics-Projects (NO_SENSITIVITY_LABEL severity, items population, git_connected). | https://hefty-pearl-60b5367c54-northeurope.webapp.fabricapps.net | 8c9b81da-3e15-4d38-a325-22a6c06ef526 |
-| FabricApp_FabricLicenseAdvisor | ws_FabricLicenseAdvisor_Dev | 🔴 Scaffolded — not deployed. 4 screens stubbed (LicenseWizard, CostEstimator, SkuReference, BreakEven). Pending: create sm_FabricLicenseAdvisor in Fabric, fill TODO_SM_DATASET_ID in rayfin.yml, run npx rayfin up. | — | — |
+| FabricApp_FabricLicenseAdvisor | ws_FabricLicenseAdvisor_Dev | 🟡 Live skeleton — deployed 2026-11-16. 4 screens stubbed (LicenseWizard, CostEstimator, SkuReference, BreakEven). Auth gate + connector wired. Next: implement screen logic using sm_FabricLicenseAdvisor data. | https://brief-fawn-30a395c0ef-northeurope.webapp.fabricapps.net | 17b217db-4e21-430a-a533-5aa99cc39a2d |
 
 ## Status key
 - 🟢 Live — deployed, frontend complete
