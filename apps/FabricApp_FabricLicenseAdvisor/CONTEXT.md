@@ -10,9 +10,13 @@ Gallery submission target: Fabric Apps Gallery.
 | Screen | Route | Status |
 |---|---|---|
 | LicenseWizard | / | Scaffolded — logic pending |
-| CostEstimator | /estimate | Scaffolded — logic pending |
-| SkuReference | /skus | Scaffolded — logic pending |
+| CostEstimator | /estimate | Live — PAYG vs Reserved calculator |
+| SkuReference | /skus | Live — full SKU table from sm_FabricLicenseAdvisor |
 | BreakEven | /breakeven | Scaffolded — logic pending |
+
+## DAX gotchas
+- `SORT()` is NOT a valid DAX table function. Use `TOPN(999, <table>, <col>, ASC)` to sort a full table.
+- Column names in raw `EVALUATE` results are prefixed with the table name (`pricing_sku sku`). Use `SELECTCOLUMNS` with explicit string aliases to get clean names.
 
 ## Data
 - Workspace: ws_FabricLicenseAdvisor_Dev (ID: 9629e4d5-9acb-499e-b936-1fd7a3b0241d)
