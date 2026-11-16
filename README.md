@@ -47,6 +47,7 @@ Fabric portal. See [HARNESS.md](./HARNESS.md) for the full workflow.
 | FabricApp_RTI_BicycleRentals | **Start here** — real-time operational loop: live DirectQuery semantic model over KQL Eventhouse, write-back rebalancing queue, 30s auto-poll | 🟢 Live |
 | FabricApp_Governance | Tenant-wide Fabric governance — workspace inventory, health scoring across 8 rules (Scanner API + Activity Events), usage patterns, Git connection status | 🟢 Live — MVP |
 | FabricApp_USGS_Earthquake | Global seismic search and analytics over live USGS API, batch pipeline to Lakehouse Gold layer | 🟢 Live |
+| FabricApp_FabricLicenseAdvisor | Fabric licensing decision tool — 3-step wizard, PAYG vs Reserved cost estimator, F64 break-even calculator, SKU reference table; live pricing data from DirectLake semantic model | 🟢 Live |
 
 ### FabricApp_RTI_BicycleRentals
 
@@ -85,6 +86,19 @@ classification.
 
 ---
 
+### FabricApp_FabricLicenseAdvisor
+
+**Type:** Decision Support / Cost Advisor
+**Stack:** Lakehouse (pricing_sku, pricing_user_licenses, pricing_storage) · DirectLake semantic model · Rayfin Fabric App
+**Live:** https://brief-fawn-30a395c0ef-northeurope.webapp.fabricapps.net
+
+Guides Fabric admins, consultants, and BI managers through Microsoft Fabric licensing decisions.
+Four screens: a 3-step LicenseWizard, an interactive PAYG vs Reserved CostEstimator, an F64 BreakEven
+calculator with dynamic pivot and org-size slider, and a live SkuReference table. All pricing data
+served from sm_FabricLicenseAdvisor via DAX queries.
+
+---
+
 ## Access & Authentication
 
 Apps require a Viewer invite to the relevant Fabric workspace.
@@ -95,6 +109,7 @@ Request access before the demo: ali.saghi.2015@gmail.com
 | FabricApp_RTI_BicycleRentals | ws_RTI_BicycleRentals | https://humid-gem-4f2e8b4d0a-northeurope.webapp.fabricapps.net |
 | FabricApp_Governance | ws_Governance_Dev | https://hefty-pearl-60b5367c54-northeurope.webapp.fabricapps.net |
 | FabricApp_USGS_Earthquake | ws_USGS_Earthquake | https://daily-cave-2c1879b505-northeurope.webapp.fabricapps.net |
+| FabricApp_FabricLicenseAdvisor | ws_FabricLicenseAdvisor_Dev | https://brief-fawn-30a395c0ef-northeurope.webapp.fabricapps.net |
 
 All apps require Microsoft sign-in (`externalEntraExchange: true`). Delegated connectors run DAX
 queries under the signed-in user's identity, so the Viewer role on the workspace is required — not
@@ -147,4 +162,4 @@ specialising in Microsoft Fabric, Power BI, and agentic analytics systems.
 - GitHub: [alisaghilutfi](https://github.com/alisaghilutfi)
 - X: [@alis05111](https://x.com/alis05111)
 
-*Last updated: 2026-11-05.*
+*Last updated: 2026-11-16.*
