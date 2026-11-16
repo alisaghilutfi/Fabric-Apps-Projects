@@ -1,0 +1,44 @@
+id: fabricapp-fabriclicenseadvisor
+name: FabricApp_FabricLicenseAdvisor
+version: 1.0.0
+services:
+  connectors:
+    enabled: true
+  auth:
+    enabled: true
+    fabric:
+      enabled: true
+      externalEntraExchange: true
+    password:
+      enabled: false
+    allowedRedirectUris:
+      - http://localhost:5173
+      - http://127.0.0.1:5173
+  data:
+    enabled: false
+    path: packages/data
+    buildCommand: npm run build
+  staticHosting:
+    enabled: true
+    path: packages/frontend
+    folder: dist
+    buildCommand: npm run build:fabric
+    indexDocument: index.html
+    assetAccess: protected
+    embedded:
+      only: false
+  storage:
+    enabled: false
+  functions:
+    enabled: false
+connectors:
+  - name: sm_fabriclicenseadvisor
+    type: fabric-semanticmodel
+    config:
+      workspaceId: 9629e4d5-9acb-499e-b936-1fd7a3b0241d
+      itemId: TODO_SM_DATASET_ID
+    auth:
+      type: delegated
+    version: "1"
+    operations:
+      - name: executeQuery
