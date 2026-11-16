@@ -9,7 +9,7 @@ Gallery submission target: Fabric Apps Gallery.
 ## Screens
 | Screen | Route | Status |
 |---|---|---|
-| LicenseWizard | / | Scaffolded — logic pending |
+| LicenseWizard | / | Live — 3-step decision wizard, all paths implemented |
 | CostEstimator | /estimate | Live — PAYG vs Reserved calculator |
 | SkuReference | /skus | Live — full SKU table from sm_FabricLicenseAdvisor |
 | BreakEven | /breakeven | Scaffolded — logic pending |
