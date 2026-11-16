@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 const QUERY = `EVALUATE
 SELECTCOLUMNS(
-  SORT(pricing_sku, pricing_sku[cus], ASC),
+  TOPN(999, pricing_sku, pricing_sku[cus], ASC),
   "sku", pricing_sku[sku],
   "cus", pricing_sku[cus],
   "vcores", pricing_sku[vcores],
