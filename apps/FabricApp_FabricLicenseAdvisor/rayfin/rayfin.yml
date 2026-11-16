@@ -36,7 +36,7 @@ connectors:
     type: fabric-semanticmodel
     config:
       workspaceId: 9629e4d5-9acb-499e-b936-1fd7a3b0241d
-      itemId: TODO_SM_DATASET_ID
+      itemId: 19433fad-1ba4-4f6d-b7d1-5f8c77827ca9
     auth:
       type: delegated
     version: "1"
