@@ -47,7 +47,7 @@ Fabric portal. See [HARNESS.md](./HARNESS.md) for the full workflow.
 | FabricApp_RTI_BicycleRentals | **Start here** — real-time operational loop: live DirectQuery semantic model over KQL Eventhouse, write-back rebalancing queue, 30s auto-poll | 🟢 Live |
 | FabricApp_Governance | Tenant-wide Fabric governance — workspace inventory, health scoring across 8 rules (Scanner API + Activity Events), usage patterns, Git connection status | 🟢 Live — MVP |
 | FabricApp_USGS_Earthquake | Global seismic search and analytics over live USGS API, batch pipeline to Lakehouse Gold layer | 🟢 Live |
-| FabricApp_FabricLicenseAdvisor | Fabric licensing decision tool — 3-step wizard, PAYG vs Reserved cost estimator, F64 break-even calculator, SKU reference table; live pricing data from DirectLake semantic model. Submitted to Fabric Apps Gallery. | 🟢 Live — Gallery pending |
+| FabricApp_FabricLicenseAdvisor | Fabric licensing decision tool — 3-step wizard, PAYG vs Reserved cost estimator, F64 break-even calculator, SKU reference table; live pricing data from DirectLake semantic model. [Gallery](https://community.fabric.microsoft.com/discussions/pbi_fabricappsgallery/fabric-license-advisor/5428394) | 🟢 Live — Gallery pending |
 
 ### FabricApp_RTI_BicycleRentals
 
@@ -91,6 +91,7 @@ classification.
 **Type:** Decision Support / Cost Advisor
 **Stack:** Lakehouse (pricing_sku, pricing_user_licenses, pricing_storage) · DirectLake semantic model · Rayfin Fabric App
 **Live:** https://brief-fawn-30a395c0ef-northeurope.webapp.fabricapps.net
+**Gallery:** https://community.fabric.microsoft.com/discussions/pbi_fabricappsgallery/fabric-license-advisor/5428394
 
 Guides Fabric admins, consultants, and BI managers through Microsoft Fabric licensing decisions.
 Four screens: a 3-step LicenseWizard, an interactive PAYG vs Reserved CostEstimator, an F64 BreakEven
