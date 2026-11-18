@@ -41,9 +41,11 @@ Gallery submission target: Fabric Apps Gallery.
 - Prepared and submitted app to Fabric Apps Gallery: animated GIF cover (4-frame, all four screens) + 3 JPG screenshots; description reviewed and finalised with ProjectPlanner; tagged OTHER.
 - Gallery assets committed to docs/images/.
 - Bumped watermark opacity through four fix commits (0.13 -> 0.20 -> 0.30 -> 0.50) to reach final approved value.
+- Added app-level README (apps/FabricApp_FabricLicenseAdvisor/README.md) with gallery link, animated GIF embed, screens table, and stack summary.
+- Updated root README.md portfolio table and app section to include gallery URL.
 
 **Current state:**
-App is live and gallery submission is pending approval. All 4 screens functional. Watermark and gallery assets in repo.
+App is live and gallery submission is pending approval. All 4 screens functional. Watermark, gallery assets, and app README in repo.
 
 **Next development:**
 - Monitor Fabric Apps Gallery for approval/publication.
