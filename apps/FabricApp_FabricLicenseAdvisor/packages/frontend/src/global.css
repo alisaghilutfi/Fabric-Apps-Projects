@@ -185,6 +185,6 @@ body::before {
   background-repeat: no-repeat;
   background-position: center center;
   background-size: 60%;
-  opacity: 0.13;
+  opacity: 0.20;
   pointer-events: none;
 }
