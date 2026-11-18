@@ -47,7 +47,7 @@ Fabric portal. See [HARNESS.md](./HARNESS.md) for the full workflow.
 | FabricApp_RTI_BicycleRentals | **Start here** — real-time operational loop: live DirectQuery semantic model over KQL Eventhouse, write-back rebalancing queue, 30s auto-poll | 🟢 Live |
 | FabricApp_Governance | Tenant-wide Fabric governance — workspace inventory, health scoring across 8 rules (Scanner API + Activity Events), usage patterns, Git connection status | 🟢 Live — MVP |
 | FabricApp_USGS_Earthquake | Global seismic search and analytics over live USGS API, batch pipeline to Lakehouse Gold layer | 🟢 Live |
-| FabricApp_FabricLicenseAdvisor | Fabric licensing decision tool — 3-step wizard, PAYG vs Reserved cost estimator, F64 break-even calculator, SKU reference table; live pricing data from DirectLake semantic model | 🟢 Live |
+| FabricApp_FabricLicenseAdvisor | Fabric licensing decision tool — 3-step wizard, PAYG vs Reserved cost estimator, F64 break-even calculator, SKU reference table; live pricing data from DirectLake semantic model. Submitted to Fabric Apps Gallery. | 🟢 Live — Gallery pending |
 
 ### FabricApp_RTI_BicycleRentals
 
@@ -162,4 +162,4 @@ specialising in Microsoft Fabric, Power BI, and agentic analytics systems.
 - GitHub: [alisaghilutfi](https://github.com/alisaghilutfi)
 - X: [@alis05111](https://x.com/alis05111)
 
-*Last updated: 2026-11-16.*
+*Last updated: 2026-11-18.*
