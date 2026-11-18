@@ -172,13 +172,17 @@ body,
 }
 
 #root {
+  height: 100%;
+}
+
+.app-shell {
   background:
     radial-gradient(ellipse 80% 60% at 15% 10%, rgba(116, 39, 116, 0.07) 0%, transparent 70%),
     radial-gradient(ellipse 60% 50% at 85% 90%, rgba(0, 159, 183, 0.05) 0%, transparent 70%),
     #ffffff;
 }
 
-.dark #root {
+.dark.app-shell {
   background:
     radial-gradient(ellipse 80% 60% at 15% 10%, rgba(116, 39, 116, 0.09) 0%, transparent 70%),
     radial-gradient(ellipse 60% 50% at 85% 90%, rgba(0, 159, 183, 0.07) 0%, transparent 70%),
