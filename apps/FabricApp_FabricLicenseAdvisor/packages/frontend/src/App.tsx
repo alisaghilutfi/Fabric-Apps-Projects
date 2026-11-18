@@ -20,7 +20,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('wizard');
 
   return (
-    <div className={cn('app-shell flex h-full flex-col', isDark && 'dark')}>
+    <div className={cn('flex h-full flex-col', isDark && 'dark')}>
       <nav className="flex items-center gap-4 border-b border-border bg-card px-6 py-3">
         <span className="mr-4 text-sm font-semibold text-foreground">
           Fabric License Advisor
