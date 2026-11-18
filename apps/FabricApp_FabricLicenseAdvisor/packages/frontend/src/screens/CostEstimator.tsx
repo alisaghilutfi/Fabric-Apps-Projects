@@ -175,7 +175,7 @@ export function CostEstimator() {
   const annualSaving = (totalPayg - totalReserved) * 12;
 
   return (
-    <div className="min-h-screen bg-background px-6 py-8">
+    <div className="min-h-screen px-6 py-8">
       <div className="mx-auto max-w-2xl space-y-8">
         <div>
           <h1 className="text-xl font-semibold text-foreground">

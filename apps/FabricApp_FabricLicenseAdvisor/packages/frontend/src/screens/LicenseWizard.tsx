@@ -470,7 +470,7 @@ export function LicenseWizard() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-6 py-8">
+    <div className="min-h-screen px-6 py-8">
       <div className="mx-auto max-w-xl">
         <div className="mb-6">
           <h1 className="text-xl font-semibold text-foreground">
